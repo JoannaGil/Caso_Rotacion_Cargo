@@ -39,6 +39,10 @@ names(rotacion)
 # Normalizanos formato nombre varaibles
 
 rotacion_limpio <- clean_names(rotacion)
+
+# Corregir una varibale manualmente - Ortografia
+rotacion_limpio <- rotacion_limpio %>%
+  rename(satisfaccion_laboral = satisfacion_laboral)
 names(rotacion_limpio)
 
 # Estructura de los datos
@@ -84,8 +88,8 @@ str(rotacion_limpio)
 
 data <- rotacion_limpio %>%
   mutate(
-    rotacion = as.numeric(rotacion == "si"),
-    genero = as.numeric(genero == "m"),
+    rotacion = as.numeric(rotacion == "Si"),
+    genero = as.numeric(genero == "M"),
     ingresos = ingreso_mensual,
     
     satlab2 = as.numeric(satisfaccion_laboral == 2),
@@ -95,10 +99,15 @@ data <- rotacion_limpio %>%
     redlab = as.numeric(rendimiento_laboral == 4)
   )
 
+str(data)
 
 # -----------------------------------------------------------------------------
-# 1. ANALISIS EXPLORATORIO DE DATOS 
+# 1. ANALISIS EXPLORATORIO INICIAL
 # -----------------------------------------------------------------------------
 
-head(rotacion)
-summary(rotacion)
+# =========================
+# 8. VARIABLES NUMÉRICAS
+# =========================
+
+
+

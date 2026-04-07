@@ -3,3 +3,52 @@ title: "Caso_Rotacion_Cargo"
 output: html_document
 ---
 
+```{r setup, include=FALSE}
+
+#source("Index.R")
+source("../Scripts/Analisis_Exploratorio_Datos.R")
+
+```
+
+<h1> Caso Rotación de Persona </h1>
+
+<p>
+
+En una organización, se busca comprender y prever los factores que influyen en la rotación de empleados entre distintos cargos. La empresa ha recopilado datos históricos sobre el empleo de sus trabajadores, incluyendo variables como la antigüedad en el cargo actual, el nivel de satisfacción laboral, el salario actual, edad y otros factores relevantes. La gerencia planea desarrollar un modelo de regresión logística que permita estimar la probabilidad de que un empleado cambie de cargo en el próximo período y determinar cuales factores indicen en mayor proporción a estos cambios.
+
+Con esta información, la empresa podrá tomar medidas proactivas para retener a su talento clave, identificar áreas de mejora en la gestión de recursos humanos y fomentar un ambiente laboral más estable y tranquilo. La predicción de la probabilidad de rotación de empleados ayudará a la empresa a tomar decisiones estratégicas informadas y a mantener un equipo de trabajo comprometido y satisfecho en sus roles actuales.
+
+A continuación se describen los pasos que la gerencia ha propuesto para el análisis:
+
+
+</p>
+
+
+
+
+```{r}
+
+
+# =========================
+# 8. VARIABLES NUMÉRICAS
+# =========================
+
+# Histograma edad
+ggplot(data, aes(x = edad)) +
+  geom_histogram(bins = 30, fill = "steelblue", color = "black") +
+  theme_minimal() +
+  labs(title = "Distribución de la edad", x = "Edad", y = "Frecuencia")
+
+# Histograma salario
+ggplot(data, aes(x = ingreso_mensual)) +
+  geom_histogram(bins = 30, fill = "darkgreen", color = "black") +
+  theme_minimal() +
+  labs(title = "Distribución del salario actual", x = "Salario", y = "Frecuencia")
+
+# Histograma antigüedad
+ggplot(data, aes(x = antiguedad_cargo)) +
+  geom_histogram(bins = 30, fill = "orange", color = "black") +
+  theme_minimal() +
+  labs(title = "Distribución de la antigüedad en el cargo", x = "Antigüedad", y = "Frecuencia")
+```
+
