@@ -408,13 +408,25 @@ ggplot(tabla_satisfaccion, aes(x = satisfaccion_laboral, y = porcentaje, fill = 
   theme_minimal()
 ```
 ```{r}
-tabla_rendimiento <- data %>%
-  count(rendimiento_laboral, rotacion) %>%
-  group_by(rendimiento_laboral) %>%
+datos <- data %>%
+  mutate(
+    rotacion = as.factor(rotacion),
+    distancia_grupo = cut(
+      distancia_casa,
+      breaks = c(0, 5, 10, 20, 30),
+      include.lowest = TRUE,
+      right = TRUE,
+      labels = c("0-5", "6-10", "11-20", "21-30")
+    )
+  )
+
+tabla_distancia <- datos %>%
+  count(distancia_grupo, rotacion) %>%
+  group_by(distancia_grupo) %>%
   mutate(porcentaje = n / sum(n)) %>%
   ungroup()
 
-ggplot(tabla_rendimiento, aes(x = rendimiento_laboral, y = porcentaje, fill = rotacion)) +
+ggplot(tabla_distancia, aes(x = distancia_grupo, y = porcentaje, fill = rotacion)) +
   geom_col(position = "fill") +
   geom_text(
     aes(label = paste0(round(porcentaje * 100, 1), "%")),
@@ -422,11 +434,27 @@ ggplot(tabla_rendimiento, aes(x = rendimiento_laboral, y = porcentaje, fill = ro
     size = 3
   ) +
   labs(
-    title = "Rotación según rendimiento laboral",
-    x = "Rendimiento laboral",
+    title = "Rotación según distancia a casa",
+    x = "Distancia a casa",
     y = "Porcentaje"
   ) +
   theme_minimal()
+
+#table(datos$distancia_casa)
+#t.test(distancia_casa ~ rotacion, data = datos)
+
+```
+```{r}
+
+datos <- data %>%
+  mutate(log_ingresos = log(ingresos))
+modelo_interaccion <- glm(
+  rotacion ~ horas_extra * satisfaccion_laboral + distancia_casa + log_ingresos,
+  data = datos,
+  family = "binomial"
+)
+
+summary(modelo_interaccion)
 ```
 
 

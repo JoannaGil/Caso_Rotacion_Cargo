@@ -90,7 +90,7 @@ str(rotacion_limpio)
 #unique(data$estado_civil)
 #unique(data$departamento)
 #unique(data$satisfaccion_laboral)
-unique(data$rendimiento_laboral)
+#unique(data$rendimiento_laboral)
 
 
 data <- rotacion_limpio %>%
@@ -105,7 +105,7 @@ data <- rotacion_limpio %>%
    
     
     satisfaccion_laboral = factor(satisfaccion_laboral),
-    rendimiento_laboral = factor(rendimiento_laboral),
+    #rendimiento_laboral = factor(rendimiento_laboral),
     cargo = as.factor(cargo),
     rotacion = as.factor(rotacion),
   )
