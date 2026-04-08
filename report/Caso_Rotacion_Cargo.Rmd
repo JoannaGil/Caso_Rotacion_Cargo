@@ -7,7 +7,7 @@ output: html_document
 
 #source("Index.R")
 source("../Scripts/Analisis_Exploratorio_Datos.R")
-
+source("../Scripts/Univariable.R")
 ```
 
 <h1> Caso Rotación de Persona </h1>
@@ -24,31 +24,699 @@ A continuación se describen los pasos que la gerencia ha propuesto para el aná
 </p>
 
 
+## VARIABLES CUANTITATIVAS
+
+
+### Distribucion antiguedad del empleado en el cargo - Moderada Alta
+
+<p>
+
+La distribución de la antigüedad en el cargo muestra una fuerte concentración de empleados en los primeros años de permanencia en su puesto actual. En particular, los intervalos entre 0 y 10 años reúnen la mayor parte de los trabajadores, con un pico importante en los primeros rangos, especialmente entre 0–2 años y 4–6 años. Esto sugiere que una proporción considerable de empleados ocupa cargos relativamente recientes.
+
+A medida que aumenta la antigüedad en el cargo, la frecuencia de empleados disminuye de forma notoria. A partir de los 10 años, se observa una caída marcada en el número de casos, y en los intervalos superiores a 20 años la presencia de empleados es muy baja. Esto indica una asimetría positiva, es decir, una distribución sesgada hacia la derecha, con una cola larga formada por pocos empleados que permanecen durante muchos años en el mismo cargo.
+
+Desde el punto de vista organizacional, esta forma de la distribución puede reflejar varios fenómenos: una dinámica de movilidad interna, promociones, cambios frecuentes de puesto o una estructura laboral donde la mayoría de los empleados no permanece demasiado tiempo en un mismo cargo. También puede indicar que solo una minoría alcanza trayectorias muy prolongadas dentro de un mismo rol.
+
+En el contexto del modelo de rotación, esta variable es especialmente relevante porque la antigüedad en el cargo actual está directamente relacionada con la probabilidad de cambio de puesto. Es razonable plantear que los empleados con menor antigüedad podrían estar en etapas iniciales de adaptación, mientras que aquellos con muchos años en el mismo cargo podrían presentar comportamientos distintos, como estabilidad o intención de movilidad. Por ello, esta variable debe considerarse como una de las más importantes dentro del análisis explicativo y predictivo.
+
+#Bivariado
+La antigüedad en el cargo presenta una diferencia clara entre los empleados que rotan y aquellos que no. Los empleados con menor tiempo en el cargo muestran una mayor tendencia a cambiar de posición, evidenciado por una media inferior y un desplazamiento de la distribución hacia valores más bajos. Aunque existe cierta superposición entre los grupos, la diferencia observada sugiere una relación moderada a fuerte entre la antigüedad y la rotación.
+
+</p>
+
+
+```{r Graf_var_antig_cargo, echo=FALSE, message=FALSE}
+
+# Gráfico interactivo
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_title(text = "Distribución de la antigüedad en el cargo") %>%
+  hc_xAxis(
+    categories = df_hist_antig$rango,
+    title = list(text = "Años en el cargo")
+  ) %>%
+  hc_yAxis(
+    title = list(text = "Número de empleados")
+  ) %>%
+  hc_add_series(
+    name = "Frecuencia",
+    data = df_hist_antig$frecuencia
+  ) %>%
+  hc_tooltip(
+    useHTML = TRUE,
+    pointFormat = paste0(
+      "<b>Rango:</b> {point.category}<br>",
+      "<b>Empleados:</b> {point.y}"
+    )
+  ) %>%
+  hc_plotOptions(
+    column = list(
+      borderWidth = 1
+    )
+  )
+
+boxplot_highcharter(
+  data = data,
+  variable = antiguedad_cargo,
+  titulo = "Antigüedad en el cargo según rotación",
+  etiqueta_y = "Años en el cargo"
+)
+
+
+```
+
+### Distribucion Años a cargo del mismo jefe - Moderada Alta 
+
+<p>
+La variable “años con el mismo jefe” muestra una relación moderada a fuerte con la rotación de empleados. Aquellos con menor tiempo bajo la supervisión del mismo jefe presentan mayor tendencia a cambiar de cargo, evidenciado por una media inferior y un desplazamiento de la distribución hacia valores más bajos. Esta variable sugiere que la estabilidad en la relación con el liderazgo influye significativamente en la permanencia de los empleados.
+
+</p>
+
+
+```{r Graf_var_acargo_mismo_jefe, echo=FALSE, message=FALSE}
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_title(text = "Distribución de años con el mismo jefe") %>%
+  hc_xAxis(
+    categories = df$rango,
+    title = list(text = "Años con el mismo jefe")
+  ) %>%
+  hc_yAxis(
+    title = list(text = "Número de empleados")
+  ) %>%
+  hc_add_series(
+    name = "Frecuencia",
+    data = df$frecuencia
+  ) %>%
+  hc_tooltip(
+    pointFormat = "<b>Frecuencia:</b> {point.y}"
+  )
+
+boxplot_highcharter(
+  data = data,
+  variable = anos_acargo_con_mismo_jefe,
+  titulo = "Años con el mismo jefe según rotación",
+  etiqueta_y = "Años con el mismo jefe"
+)
+```
+
+
+
+### Distribucion del Salario (Ingreso mensual) - Moderada
+
+<p>
+
+La distribución del ingreso mensual evidencia una alta concentración de empleados en rangos salariales bajos, particularmente entre 2000 y 3000, con una disminución progresiva en la frecuencia a medida que aumentan los ingresos. Asimismo, se observa una cola larga hacia la derecha, indicando la presencia de valores elevados poco frecuentes. Este comportamiento confirma la existencia de una distribución asimétrica positiva, lo cual justifica la aplicación de una transformación logarítmica para mejorar el análisis estadístico.
+
+#Bivariado
+El análisis bivariado muestra que los empleados que presentan rotación tienen, en promedio, menores niveles de ingreso en comparación con aquellos que no rotan. Aunque existe cierta superposición entre los grupos, se observa un desplazamiento consistente hacia valores más bajos en el grupo de rotación, lo que sugiere una relación moderada entre el ingreso y la probabilidad de cambio de cargo.
+
+</p>
+
+```{r Graf_var_salario, echo=FALSE, message=FALSE}
+
+# Gráfico interactivo
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_title(text = "Distribución del ingreso mensual") %>%
+  hc_xAxis(
+    categories = df_hist_ingreso$rango,
+    title = list(text = "Rango de Salario")
+  ) %>%
+  hc_yAxis(
+    title = list(text = "Numero de empleados - Frecuencia ")
+  ) %>%
+  hc_add_series(
+    name = "histograma por rangos de ingreso mensual",
+    data = df_hist_ingreso$frecuencia
+  ) %>%
+  hc_tooltip(
+    useHTML = TRUE,
+    pointFormat = paste0(
+      "<b>Rango:</b> {point.category}<br>",
+      "<b>Frecuencia:</b> {point.y}"
+    )
+  ) %>%
+  hc_plotOptions(
+    column = list(
+      borderWidth = 1
+    )
+  )
+
+#Bivariado
+boxplot_highcharter(
+  data = data,
+  variable = log_ingresos,
+  titulo = "Log de ingresos según rotación",
+  etiqueta_y = "Log del ingreso mensual"
+)
+
+```
+
+
+
+
+
+## VARIABLES CUALITATIVAS
+
+### Distribucion Horas Extras - Fuerte
+
+<p>
+
+El análisis muestra que los empleados que realizan horas extra presentan una probabilidad significativamente mayor de rotación en comparación con aquellos que no las realizan. La proporción de rotación en este grupo es considerablemente más alta, lo que sugiere que la carga laboral es un factor determinante en la decisión de cambio de cargo.
+
+</p?
+
+
+```{r Graf_var_horas_extras, echo=FALSE, message=FALSE}
+
+# Gráfico
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_plotOptions(column = list(stacking = "percent")) %>%
+  hc_title(text = "Proporción de rotación según horas extra") %>%
+  hc_xAxis(categories = c("No", "Si")) %>%
+  hc_yAxis(
+    labels = list(format = "{value:.0%}"),
+    title = list(text = "Proporción")
+  ) %>%
+  hc_add_series(
+    name = "No rotación",
+    data = no_rot
+  ) %>%
+  hc_add_series(
+    name = "Sí rotación",
+    data = si_rot
+  ) %>%
+  hc_tooltip(
+    pointFormat = "<b>{series.name}:</b> {point.percentage:.2f}%"
+  )
+
+#table(data$horas_extra)
+#str(data$horas_extra)
+  
+```
+
+#Estado Civil - Moderada
+
+<p>
+El estado civil presenta diferencias en los niveles de rotación, destacándose un mayor porcentaje en el grupo de empleados divorciados. Aunque los grupos de solteros y casados muestran niveles similares y relativamente bajos de rotación, la variabilidad observada sugiere una relación moderada entre esta variable y la rotación, posiblemente influenciada por factores personales.
+</p>
+
+```{r Graf_var_estado_civil, echo=FALSE, message=FALSE}
+
+df_estado <- data %>%
+  count(estado_civil, rotacion) %>%
+  mutate(
+    rotacion_label = ifelse(rotacion == 0, "No rotación", "Sí rotación")
+  )
+civil_levels <- unique(data$estado_civil)
+
+df_estado <- data %>%
+  count(estado_civil, rotacion) %>%
+  mutate(
+    rotacion_label = ifelse(rotacion == 0, "No rotación", "Sí rotación")
+  )
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_plotOptions(column = list(stacking = "percent")) %>%
+  hc_title(text = "Proporción de rotación según estado civil") %>%
+  hc_xAxis(
+    categories = civil_levels,
+    title = list(text = "Estado civil")
+  ) %>%
+  hc_yAxis(
+    labels = list(format = "{value:.0%}"),
+    title = list(text = "Proporción")
+  ) %>%
+  hc_add_series(
+    name = "No rotación",
+    data = no_rot
+  ) %>%
+  hc_add_series(
+    name = "Sí rotación",
+    data = si_rot
+  ) %>%
+  hc_tooltip(
+    pointFormat = "<b>{series.name}:</b> {point.percentage:.2f}%"
+  )
+
+#table(data$estado_civil)
+#str(data$estado_civil)
+
+```
+
+
+
+
+### Distribucion Departamento - Moderada Baja
+
+<p>
+El análisis por departamento muestra diferencias moderadas en los niveles de rotación. Aunque se observa una mayor proporción en áreas como Recursos Humanos, las variaciones entre departamentos no son significativamente amplias, lo que sugiere que este factor tiene un impacto limitado en la rotación en comparación con otras variables analizadas.
+</p
+
+
+```{r Graf_var_departamento, echo=FALSE, message=FALSE}
+df_depto <- data %>%
+  count(departamento, rotacion) %>%
+  mutate(
+    rotacion_label = ifelse(rotacion == 0, "No rotación", "Sí rotación")
+  )
+depto_levels <- unique(data$departamento)
+
+no_rot <- df_depto %>%
+  filter(rotacion_label == "No rotación") %>%
+  arrange(departamento) %>%
+  pull(n)
+
+si_rot <- df_depto %>%
+  filter(rotacion_label == "Sí rotación") %>%
+  arrange(departamento) %>%
+  pull(n)
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_plotOptions(column = list(stacking = "percent")) %>%
+  hc_title(text = "Proporción de rotación por departamento") %>%
+  hc_xAxis(
+    categories = depto_levels,
+    title = list(text = "Departamento")
+  ) %>%
+  hc_yAxis(
+    labels = list(format = "{value:.0%}"),
+    title = list(text = "Proporción")
+  ) %>%
+  hc_add_series(
+    name = "No rotación",
+    data = no_rot
+  ) %>%
+  hc_add_series(
+    name = "Sí rotación",
+    data = si_rot
+  ) %>%
+  hc_tooltip(
+    pointFormat = "<b>{series.name}:</b> {point.percentage:.2f}%"
+  )
+
+
+
+```
+
+#Crago vs Rotacion
+```{r}
+# Tabla de porcentajes por cargo
+tabla_cargo <- datos %>%
+  count(cargo, rotacion) %>%
+  group_by(cargo) %>%
+  mutate(porcentaje = n / sum(n)) %>%
+  ungroup()
+
+tabla_cargo <- datos %>%
+  count(cargo, rotacion) %>%
+  group_by(cargo) %>%
+  mutate(porcentaje = n / sum(n)) %>%
+  ungroup()
+
+ggplot(tabla_cargo, aes(x = cargo, y = porcentaje, fill = rotacion)) +
+  geom_col(position = "fill") +
+  geom_text(
+    aes(label = scales::percent(porcentaje, accuracy = 0.1)),
+    position = position_fill(vjust = 0.5),
+    size = 3
+  ) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Porcentaje de rotación según cargo",
+    x = "Cargo",
+    y = "Porcentaje",
+    fill = "Rotación"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+table(datos$cargo)
+```
+#Crago vs Horas extras
+```{r}
+tabla_cruce <- data %>%
+  count(cargo, horas_extra, rotacion) %>%
+  group_by(cargo, horas_extra) %>%
+  mutate(porcentaje = n / sum(n)) %>%
+  ungroup()
+
+ggplot(tabla_cruce, aes(x = cargo, y = porcentaje, fill = rotacion)) +
+  geom_col(position = "fill") +
+  facet_wrap(~ horas_extra) +
+  geom_text(
+    aes(label = paste0(round(porcentaje * 100, 1), "%")),
+    position = position_fill(vjust = 0.5),
+    size = 3
+  ) +
+  labs(
+    title = "Rotación por cargo y horas extra",
+    x = "Cargo",
+    y = "Porcentaje"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+# Tabla de proporciones
+tabla_satisfaccion <- data %>%
+  count(horas_extra, satisfaccion_laboral, rotacion) %>%
+  group_by(horas_extra, satisfaccion_laboral) %>%
+  mutate(porcentaje = n / sum(n)) %>%
+  ungroup()
+
+# Gráfica
+ggplot(tabla_satisfaccion, aes(x = satisfaccion_laboral, y = porcentaje, fill = rotacion)) +
+  geom_col(position = "fill") +
+  facet_wrap(~ horas_extra) +
+  geom_text(
+    aes(label = paste0(round(porcentaje * 100, 1), "%")),
+    position = position_fill(vjust = 0.5),
+    size = 3
+  ) +
+  labs(
+    title = "Rotación según satisfacción laboral y horas extra",
+    x = "Satisfacción laboral",
+    y = "Porcentaje"
+  ) +
+  theme_minimal()
+```
+```{r}
+tabla_rendimiento <- data %>%
+  count(rendimiento_laboral, rotacion) %>%
+  group_by(rendimiento_laboral) %>%
+  mutate(porcentaje = n / sum(n)) %>%
+  ungroup()
+
+ggplot(tabla_rendimiento, aes(x = rendimiento_laboral, y = porcentaje, fill = rotacion)) +
+  geom_col(position = "fill") +
+  geom_text(
+    aes(label = paste0(round(porcentaje * 100, 1), "%")),
+    position = position_fill(vjust = 0.5),
+    size = 3
+  ) +
+  labs(
+    title = "Rotación según rendimiento laboral",
+    x = "Rendimiento laboral",
+    y = "Porcentaje"
+  ) +
+  theme_minimal()
+```
+
+
+```{r screnning, echo=FALSE, message=FALSE}
+
+library(dplyr)
+library(ggplot2)
+library(purrr)
+library(broom)
+
+#--------------------------------------------------
+# 1. Preparación de la base
+#--------------------------------------------------
+
+# Asegúrate de que la variable objetivo sea binaria/factor
+datos <- data %>%
+  mutate(
+    rotacion = as.factor(rotacion)
+  )
+
+# Opcional: revisar estructura
+str(datos)
+
+#--------------------------------------------------
+# 2. Separar variables numéricas y categóricas
+#--------------------------------------------------
+
+variable_objetivo <- "rotacion"
+
+variables_categoricas <- names(datos)[sapply(datos, function(x) is.factor(x) || is.character(x))]
+variables_categoricas <- setdiff(variables_categoricas, variable_objetivo)
+
+variables_numericas <- names(datos)[sapply(datos, is.numeric)]
+variables_numericas <- setdiff(variables_numericas, variable_objetivo)
+
+# Convertir character a factor para análisis categórico
+datos <- datos %>%
+  mutate(across(all_of(variables_categoricas), as.factor))
+
+#--------------------------------------------------
+# 3. Screening exploratorio para variables categóricas
+#    Usa tabla de contingencia + chi-cuadrado
+#--------------------------------------------------
+
+screening_categoricas <- map_dfr(variables_categoricas, function(var) {
+  
+  tabla <- table(datos[[var]], datos[[variable_objetivo]])
+  
+  # Evitar errores por tablas degeneradas
+  if (nrow(tabla) < 2 || ncol(tabla) < 2) {
+    return(data.frame(
+      variable = var,
+      test = "Chi-cuadrado",
+      p_value = NA_real_,
+      estadistico = NA_real_,
+      tipo = "Categorica"
+    ))
+  }
+  
+  prueba <- tryCatch(
+    chisq.test(tabla),
+    error = function(e) NULL,
+    warning = function(w) suppressWarnings(chisq.test(tabla))
+  )
+  
+  if (is.null(prueba)) {
+    data.frame(
+      variable = var,
+      test = "Chi-cuadrado",
+      p_value = NA_real_,
+      estadistico = NA_real_,
+      tipo = "Categorica"
+    )
+  } else {
+    data.frame(
+      variable = var,
+      test = "Chi-cuadrado",
+      p_value = prueba$p.value,
+      estadistico = unname(prueba$statistic),
+      tipo = "Categorica"
+    )
+  }
+})
+
+#--------------------------------------------------
+# 4. Screening exploratorio para variables numéricas
+#    Usa regresión logística univariada
+#--------------------------------------------------
+
+screening_numericas <- map_dfr(variables_numericas, function(var) {
+  
+  formula_uni <- as.formula(paste(variable_objetivo, "~", var))
+  
+  modelo_uni <- tryCatch(
+    glm(formula_uni, data = datos, family = binomial),
+    error = function(e) NULL
+  )
+  
+  if (is.null(modelo_uni)) {
+    return(data.frame(
+      variable = var,
+      test = "Logistica univariada",
+      p_value = NA_real_,
+      estadistico = NA_real_,
+      coeficiente = NA_real_,
+      odds_ratio = NA_real_,
+      tipo = "Numerica"
+    ))
+  }
+  
+  resumen <- summary(modelo_uni)$coefficients
+  
+  # fila 2 = predictor
+  if (nrow(resumen) < 2) {
+    return(data.frame(
+      variable = var,
+      test = "Logistica univariada",
+      p_value = NA_real_,
+      estadistico = NA_real_,
+      coeficiente = NA_real_,
+      odds_ratio = NA_real_,
+      tipo = "Numerica"
+    ))
+  }
+  
+  coef_var <- resumen[2, 1]
+  z_var    <- resumen[2, 3]
+  p_var    <- resumen[2, 4]
+  
+  data.frame(
+    variable = var,
+    test = "Logistica univariada",
+    p_value = p_var,
+    estadistico = z_var,
+    coeficiente = coef_var,
+    odds_ratio = exp(coef_var),
+    tipo = "Numerica"
+  )
+})
+
+#--------------------------------------------------
+# 5. Screening exploratorio para variables categóricas
+#    también con logística univariada (recomendado)
+#--------------------------------------------------
+
+screening_categoricas_logit <- map_dfr(variables_categoricas, function(var) {
+  
+  formula_uni <- as.formula(paste(variable_objetivo, "~", var))
+  
+  modelo_uni <- tryCatch(
+    glm(formula_uni, data = datos, family = binomial),
+    error = function(e) NULL
+  )
+  
+  if (is.null(modelo_uni)) {
+    return(data.frame(
+      variable = var,
+      p_value_min = NA_real_,
+      coef_max = NA_real_,
+      odds_ratio_max = NA_real_,
+      tipo = "Categorica"
+    ))
+  }
+  
+  resumen <- broom::tidy(modelo_uni)
+  
+  resumen <- resumen %>%
+    filter(term != "(Intercept)")
+  
+  if (nrow(resumen) == 0) {
+    return(data.frame(
+      variable = var,
+      p_value_min = NA_real_,
+      coef_max = NA_real_,
+      odds_ratio_max = NA_real_,
+      tipo = "Categorica"
+    ))
+  }
+  
+  data.frame(
+    variable = var,
+    p_value_min = min(resumen$p.value, na.rm = TRUE),
+    coef_max = resumen$estimate[which.max(abs(resumen$estimate))],
+    odds_ratio_max = exp(resumen$estimate[which.max(abs(resumen$estimate))]),
+    tipo = "Categorica"
+  )
+})
+
+#--------------------------------------------------
+# 6. Unir resultados en un ranking general
+#--------------------------------------------------
+
+ranking_exploratorio <- bind_rows(
+  screening_numericas %>%
+    transmute(
+      variable,
+      tipo,
+      p_value = p_value,
+      coeficiente = coeficiente,
+      odds_ratio = odds_ratio
+    ),
+  
+  screening_categoricas_logit %>%
+    transmute(
+      variable,
+      tipo,
+      p_value = p_value_min,
+      coeficiente = coef_max,
+      odds_ratio = odds_ratio_max
+    )
+) %>%
+  mutate(
+    p_value_label = case_when(
+      is.na(p_value) ~ NA_character_,
+      p_value < 0.0001 ~ "<0.0001",
+      TRUE ~ format(round(p_value, 4), nsmall = 4)
+    ),
+    importancia = case_when(
+      is.na(p_value)      ~ "No evaluable",
+      p_value < 0.001     ~ "Muy fuerte",
+      p_value < 0.01      ~ "Fuerte",
+      p_value < 0.05      ~ "Significativa",
+      p_value < 0.10      ~ "Marginal",
+      TRUE                ~ "No significativa"
+    ),
+    efecto = case_when(
+      is.na(coeficiente)    ~ "No evaluable",
+      coeficiente > 0       ~ "Aumenta rotación",
+      coeficiente < 0       ~ "Reduce rotación",
+      TRUE                  ~ "Sin efecto"
+    ),
+    coeficiente = round(coeficiente, 3),
+    odds_ratio = round(odds_ratio, 3)
+  ) %>%
+  arrange(p_value)
+
+ranking_exploratorio
+
+```
+
 
 
 ```{r}
 
+modeloo <- glm(rotacion ~ edad + antiguedad + ingresos +
+              genero + satisfaccion_laboral + rendimiento_laboral,
+              data = data,
+              family = binomial)
 
-# =========================
-# 8. VARIABLES NUMÉRICAS
-# =========================
+#summary(modeloo)
 
-# Histograma edad
-ggplot(data, aes(x = edad)) +
-  geom_histogram(bins = 30, fill = "steelblue", color = "black") +
-  theme_minimal() +
-  labs(title = "Distribución de la edad", x = "Edad", y = "Frecuencia")
 
-# Histograma salario
-ggplot(data, aes(x = ingreso_mensual)) +
-  geom_histogram(bins = 30, fill = "darkgreen", color = "black") +
-  theme_minimal() +
-  labs(title = "Distribución del salario actual", x = "Salario", y = "Frecuencia")
 
-# Histograma antigüedad
-ggplot(data, aes(x = antiguedad_cargo)) +
-  geom_histogram(bins = 30, fill = "orange", color = "black") +
-  theme_minimal() +
-  labs(title = "Distribución de la antigüedad en el cargo", x = "Antigüedad", y = "Frecuencia")
+tabla_modelo_ord <- tidy(modeloo) %>%
+  filter(term != "(Intercept)") %>%
+  mutate(
+    coeficiente = round(estimate, 3),
+    error_std = round(std.error, 3),
+    z_value = round(statistic, 3),
+    odds_ratio = round(exp(estimate), 3),
+    p_num = p.value,
+    p_value = ifelse(p.value < 0.0001, "<0.0001", format(round(p.value, 4), nsmall = 4)),
+    efecto = case_when(
+      estimate > 0 ~ "Aumenta rotación",
+      estimate < 0 ~ "Reduce rotación",
+      TRUE ~ "Sin cambio"
+    ),
+    importancia = case_when(
+      p.value < 0.001 ~ "Muy fuerte",
+      p.value < 0.05 ~ "Significativa",
+      p.value < 0.10 ~ "Marginal",
+      TRUE ~ "No significativa"
+    )
+  ) %>%
+  arrange(p_num) %>%
+  select(
+    variable = term,
+    coeficiente,
+    error_std,
+    z_value,
+    odds_ratio,
+    p_value,
+    efecto,
+    importancia
+  )
+
+tabla_modelo_ord
+
+
+
+
 ```
 

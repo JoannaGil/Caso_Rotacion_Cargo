@@ -10,6 +10,8 @@ library(summarytools)
 library(janitor)
 library(skimr)
 library(dplyr)
+library(highcharter)
+library(dplyr)
 
 
 # -----------------------------------------------------------------------------
@@ -83,31 +85,35 @@ str(rotacion_limpio)
 # CREACIÓN DE VARIABLES
 # =========================
 
-#unique(rotacion_limpio$rotacion)
-#unique(rotacion_limpio$genero)
+#unique(data$rotacion)
+#unique(data$genero)
+#unique(data$estado_civil)
+#unique(data$departamento)
+#unique(data$satisfaccion_laboral)
+unique(data$rendimiento_laboral)
+
 
 data <- rotacion_limpio %>%
   mutate(
     rotacion = as.numeric(rotacion == "Si"),
     genero = as.numeric(genero == "M"),
+    horas_extra = factor(horas_extra, levels = c("No", "Si")),
+    estado_civil = factor(estado_civil, levels = c("Soltero", "Casado", "Divorciado")),
+    departamento = factor(departamento,
+                           levels = c("Ventas", "IyD", "RH")),
     ingresos = ingreso_mensual,
+   
     
-    satlab2 = as.numeric(satisfaccion_laboral == 2),
-    satlab3 = as.numeric(satisfaccion_laboral == 3),
-    satlab4 = as.numeric(satisfaccion_laboral == 4),
-    
-    redlab = as.numeric(rendimiento_laboral == 4)
+    satisfaccion_laboral = factor(satisfaccion_laboral),
+    rendimiento_laboral = factor(rendimiento_laboral),
+    cargo = as.factor(cargo),
+    rotacion = as.factor(rotacion),
   )
 
 str(data)
 
+
 # -----------------------------------------------------------------------------
-# 1. ANALISIS EXPLORATORIO INICIAL
+# 1. ANALISIS EXPLORATORIO INICIAL 
 # -----------------------------------------------------------------------------
-
-# =========================
-# 8. VARIABLES NUMÉRICAS
-# =========================
-
-
 
