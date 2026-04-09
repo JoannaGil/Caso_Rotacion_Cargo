@@ -276,33 +276,35 @@ highchart() %>%
 <p>
 El análisis por departamento muestra diferencias moderadas en los niveles de rotación. Aunque se observa una mayor proporción en áreas como Recursos Humanos, las variaciones entre departamentos no son significativamente amplias, lo que sugiere que este factor tiene un impacto limitado en la rotación en comparación con otras variables analizadas.
 </p
-
+#Cargo vs Rotacion
 
 ```{r Graf_var_departamento, echo=FALSE, message=FALSE}
-df_depto <- data %>%
-  count(departamento, rotacion) %>%
+df_cargo <- data %>%
+  count(cargo, rotacion) %>%
   mutate(
     rotacion_label = ifelse(rotacion == 0, "No rotación", "Sí rotación")
   )
-depto_levels <- unique(data$departamento)
 
-no_rot <- df_depto %>%
+cargo_levels <- sort(unique(data$cargo))
+
+no_rot <- df_cargo %>%
   filter(rotacion_label == "No rotación") %>%
-  arrange(departamento) %>%
+  arrange(cargo) %>%
   pull(n)
 
-si_rot <- df_depto %>%
+si_rot <- df_cargo %>%
   filter(rotacion_label == "Sí rotación") %>%
-  arrange(departamento) %>%
+  arrange(cargo) %>%
   pull(n)
 
 highchart() %>%
   hc_chart(type = "column") %>%
   hc_plotOptions(column = list(stacking = "percent")) %>%
-  hc_title(text = "Proporción de rotación por departamento") %>%
+  hc_title(text = "Proporción de rotación por cargo") %>%
   hc_xAxis(
-    categories = depto_levels,
-    title = list(text = "Departamento")
+    categories = cargo_levels,
+    title = list(text = "Cargo"),
+    labels = list(rotation = -45)  # 🔥 importante para legibilidad
   ) %>%
   hc_yAxis(
     labels = list(format = "{value:.0%}"),
@@ -324,64 +326,81 @@ highchart() %>%
 
 ```
 
-#Crago vs Rotacion
+
+
+
+#Crago vs Horas extras vs Rotacion
+
 ```{r}
-# Tabla de porcentajes por cargo
-tabla_cargo <- datos %>%
-  count(cargo, rotacion) %>%
-  group_by(cargo) %>%
-  mutate(porcentaje = n / sum(n)) %>%
-  ungroup()
 
-tabla_cargo <- datos %>%
-  count(cargo, rotacion) %>%
-  group_by(cargo) %>%
-  mutate(porcentaje = n / sum(n)) %>%
-  ungroup()
+library(htmltools)
 
-ggplot(tabla_cargo, aes(x = cargo, y = porcentaje, fill = rotacion)) +
-  geom_col(position = "fill") +
-  geom_text(
-    aes(label = scales::percent(porcentaje, accuracy = 0.1)),
-    position = position_fill(vjust = 0.5),
-    size = 3
-  ) +
-  scale_y_continuous(labels = scales::percent_format()) +
-  labs(
-    title = "Porcentaje de rotación según cargo",
-    x = "Cargo",
-    y = "Porcentaje",
-    fill = "Rotación"
-  ) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-table(datos$cargo)
-```
-#Crago vs Horas extras
-```{r}
 tabla_cruce <- data %>%
   count(cargo, horas_extra, rotacion) %>%
-  group_by(cargo, horas_extra) %>%
-  mutate(porcentaje = n / sum(n)) %>%
-  ungroup()
+  mutate(
+    rotacion_label = ifelse(rotacion == 0, "No rotación", "Sí rotación")
+  )
 
-ggplot(tabla_cruce, aes(x = cargo, y = porcentaje, fill = rotacion)) +
-  geom_col(position = "fill") +
-  facet_wrap(~ horas_extra) +
-  geom_text(
-    aes(label = paste0(round(porcentaje * 100, 1), "%")),
-    position = position_fill(vjust = 0.5),
-    size = 3
-  ) +
-  labs(
-    title = "Rotación por cargo y horas extra",
-    x = "Cargo",
-    y = "Porcentaje"
-  ) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+cargo_levels <- sort(unique(data$cargo))
+
+grafico_cargo_hextra <- function(valor_horas_extra) {
+  
+  df_filtrado <- tabla_cruce %>%
+    filter(horas_extra == valor_horas_extra)
+  
+  no_rot <- df_filtrado %>%
+    filter(rotacion_label == "No rotación") %>%
+    arrange(cargo) %>%
+    pull(n)
+  
+  si_rot <- df_filtrado %>%
+    filter(rotacion_label == "Sí rotación") %>%
+    arrange(cargo) %>%
+    pull(n)
+  
+  highchart() %>%
+    hc_chart(type = "column") %>%
+    hc_title(text = paste("Horas extra:", valor_horas_extra)) %>%
+    hc_xAxis(
+      categories = cargo_levels,
+      title = list(text = "Cargo"),
+      labels = list(rotation = -45)
+    ) %>%
+    hc_yAxis(
+      labels = list(format = "{value:.0%}"),
+      title = list(text = "Proporción")
+    ) %>%
+    hc_plotOptions(
+      column = list(
+        stacking = "percent",
+        dataLabels = list(
+          enabled = TRUE,
+          format = "{point.percentage:.1f}%"
+        )
+      )
+    ) %>%
+    hc_add_series(name = "No rotación", data = no_rot) %>%
+    hc_add_series(name = "Sí rotación", data = si_rot) %>%
+    hc_tooltip(
+      pointFormat = "<b>{series.name}:</b> {point.percentage:.2f}%"
+    )
+}
+
+browsable(
+  tagList(
+    tags$h2("Rotación por cargo y horas extra"),
+    grafico_cargo_hextra("No"),
+    tags$br(),
+    grafico_cargo_hextra("Si")
+  )
+)
+
+
+
 ```
+
+
+
 
 ```{r}
 # Tabla de proporciones
@@ -444,18 +463,130 @@ ggplot(tabla_distancia, aes(x = distancia_grupo, y = porcentaje, fill = rotacion
 #t.test(distancia_casa ~ rotacion, data = datos)
 
 ```
+
+
 ```{r}
 
-datos <- data %>%
-  mutate(log_ingresos = log(ingresos))
-modelo_interaccion <- glm(
-  rotacion ~ horas_extra * satisfaccion_laboral + distancia_casa + log_ingresos,
-  data = datos,
-  family = "binomial"
-)
 
-summary(modelo_interaccion)
+
+viaje_levels <- levels(data$viaje_de_negocios)
+
+no_rot <- df_viaje %>%
+  filter(rotacion_label == "No rotación") %>%
+  arrange(viaje_de_negocios) %>%
+  pull(n)
+
+si_rot <- df_viaje %>%
+  filter(rotacion_label == "Sí rotación") %>%
+  arrange(viaje_de_negocios) %>%
+  pull(n)
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_plotOptions(
+    column = list(
+      stacking = "percent",
+      dataLabels = list(
+        enabled = TRUE,
+        format = "{point.percentage:.1f}%"
+      )
+    )
+  ) %>%
+  hc_title(text = "Proporción de rotación según viajes de negocios") %>%
+  hc_xAxis(
+    categories = viaje_levels,
+    title = list(text = "Viajes de negocios")
+  ) %>%
+  hc_yAxis(
+    labels = list(format = "{value:.0%}"),
+    title = list(text = "Proporción")
+  ) %>%
+  hc_add_series(
+    name = "No rotación",
+    data = no_rot
+  ) %>%
+  hc_add_series(
+    name = "Sí rotación",
+    data = si_rot
+  ) %>%
+  hc_tooltip(
+    pointFormat = "<b>{series.name}:</b> {point.percentage:.2f}%"
+  )
+
+
+
 ```
+
+
+```{r}
+df_campo <- data %>%
+  count(campo_educacion, rotacion) %>%
+  mutate(
+    rotacion_label = ifelse(rotacion == 0, "No rotación", "Sí rotación")
+  )
+
+campo_levels <- sort(unique(as.character(data$campo_educacion)))
+
+no_rot_campo <- df_campo %>%
+  filter(rotacion_label == "No rotación") %>%
+  arrange(campo_educacion) %>%
+  pull(n)
+
+si_rot_campo <- df_campo %>%
+  filter(rotacion_label == "Sí rotación") %>%
+  arrange(campo_educacion) %>%
+  pull(n)
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_plotOptions(
+    column = list(
+      stacking = "percent",
+      dataLabels = list(
+        enabled = TRUE,
+        format = "{point.percentage:.1f}%"
+      )
+    )
+  ) %>%
+  hc_title(text = "Proporción de rotación según campo de educación") %>%
+  hc_xAxis(
+    categories = campo_levels,
+    title = list(text = "Campo de educación"),
+    labels = list(rotation = -45)
+  ) %>%
+  hc_yAxis(
+    labels = list(format = "{value:.0%}"),
+    title = list(text = "Proporción")
+  ) %>%
+  hc_add_series(
+    name = "No rotación",
+    data = no_rot_campo
+  ) %>%
+  hc_add_series(
+    name = "Sí rotación",
+    data = si_rot_campo
+  ) %>%
+  hc_tooltip(
+    pointFormat = "<b>{series.name}:</b> {point.percentage:.2f}%"
+  )
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ```{r screnning, echo=FALSE, message=FALSE}
@@ -699,50 +830,121 @@ ranking_exploratorio
 
 ```{r}
 
-modeloo <- glm(rotacion ~ edad + antiguedad + ingresos +
+
+modeloo <- glm(rotacion ~ edad + antiguedad_cargo + ingresos +
               genero + satisfaccion_laboral + rendimiento_laboral,
               data = data,
               family = binomial)
 
-#summary(modeloo)
+modelo_nuevo <- glm(
+  rotacion ~ horas_extra + estado_civil + departamento +
+    antiguedad_cargo + anos_acargo_con_mismo_jefe + ingresos +
+    campo_educacion,
+  data = data,
+  family = binomial
+)
+
+modelo_nuevo3 <- glm(
+  rotacion ~ horas_extra + cargo_grupo + viaje_de_negocios + distancia_casa + log_ingresos + satisfaccion_ambiental,
+  data = data,
+  family = binomial
+)
+
+modelo_nuevo2 <- glm(
+  rotacion ~ horas_extra + log_ingresos + viaje_de_negocios +
+    distancia_casa + cargo + antiguedad,
+  data = data,
+  family = binomial
+)
+
+summary(modelo_nuevo3)
+#summary(modelo_nuevo)
+
+# AIC(modeloo, modelo_nuevo, modelo_nuevo2, modelo_nuevo3)
+# anova(modeloo, modelo_nuevo, modelo_nuevo2, modelo_nuevo3, test = "Chisq")
+# 
+# 
+# tabla_modelo_ord <- tidy(modeloo) %>%
+#   filter(term != "(Intercept)") %>%
+#   mutate(
+#     coeficiente = round(estimate, 3),
+#     error_std = round(std.error, 3),
+#     z_value = round(statistic, 3),
+#     odds_ratio = round(exp(estimate), 3),
+#     p_num = p.value,
+#     p_value = ifelse(p.value < 0.0001, "<0.0001", format(round(p.value, 4), nsmall = 4)),
+#     efecto = case_when(
+#       estimate > 0 ~ "Aumenta rotación",
+#       estimate < 0 ~ "Reduce rotación",
+#       TRUE ~ "Sin cambio"
+#     ),
+#     importancia = case_when(
+#       p.value < 0.001 ~ "Muy fuerte",
+#       p.value < 0.05 ~ "Significativa",
+#       p.value < 0.10 ~ "Marginal",
+#       TRUE ~ "No significativa"
+#     )
+#   ) %>%
+#   arrange(p_num) %>%
+#   select(
+#     variable = term,
+#     coeficiente,
+#     error_std,
+#     z_value,
+#     odds_ratio,
+#     p_value,
+#     efecto,
+#     importancia
+#   )
+
+#tabla_modelo_ord
 
 
 
-tabla_modelo_ord <- tidy(modeloo) %>%
-  filter(term != "(Intercept)") %>%
-  mutate(
-    coeficiente = round(estimate, 3),
-    error_std = round(std.error, 3),
-    z_value = round(statistic, 3),
-    odds_ratio = round(exp(estimate), 3),
-    p_num = p.value,
-    p_value = ifelse(p.value < 0.0001, "<0.0001", format(round(p.value, 4), nsmall = 4)),
-    efecto = case_when(
-      estimate > 0 ~ "Aumenta rotación",
-      estimate < 0 ~ "Reduce rotación",
-      TRUE ~ "Sin cambio"
-    ),
-    importancia = case_when(
-      p.value < 0.001 ~ "Muy fuerte",
-      p.value < 0.05 ~ "Significativa",
-      p.value < 0.10 ~ "Marginal",
-      TRUE ~ "No significativa"
-    )
-  ) %>%
-  arrange(p_num) %>%
-  select(
-    variable = term,
-    coeficiente,
-    error_std,
-    z_value,
-    odds_ratio,
-    p_value,
-    efecto,
-    importancia
-  )
 
-tabla_modelo_ord
+```
 
+
+```{r}
+
+#summary(data)
+
+library(pROC)
+
+# 1. Crear variable dentro del dataset
+data$log_ingresos <- log(data$ingreso_mensual)
+
+# 2. Dividir datos
+set.seed(123)
+train_index <- sample(1:nrow(data), 0.7 * nrow(data))
+
+train <- data[train_index, ]
+test  <- data[-train_index, ]
+
+# 3. Ajustar modelo
+modelo_train <- glm(
+  rotacion ~ horas_extra + cargo_grupo + viaje_de_negocios + distancia_casa + log_ingresos + satisfaccion_ambiental ,
+  data = train,
+  family = binomial
+)
+
+# 4. Predicciones
+pred_train <- predict(modelo_train, newdata = train, type = "response")
+pred_test  <- predict(modelo_train, newdata = test, type = "response")
+
+# 5. Revisar longitudes
+length(train$rotacion)
+length(pred_train)
+
+length(test$rotacion)
+length(pred_test)
+
+# 6. AUC
+auc_train <- roc(response = train$rotacion, predictor = pred_train)$auc
+auc_test  <- roc(response = test$rotacion, predictor = pred_test)$auc
+
+auc_train
+auc_test
 
 
 
