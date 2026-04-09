@@ -3,14 +3,13 @@
 # -----------------------------------------------------------------------------
 # 0. LIBRERÍAS REQUERIDAS
 # -----------------------------------------------------------------------------
-library(paqueteMODELOS)
+
 library(ggplot2)
 library(summarytools)
 library(janitor)
 library(skimr)
-library(dplyr)
 library(highcharter)
-library(dplyr)
+
 
 # -----------------------------------------------------------------------------
 # 1. UNIVARIADO 
