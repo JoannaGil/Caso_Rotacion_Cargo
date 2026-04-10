@@ -173,6 +173,7 @@ data <- rotacion_limpio %>%
     # Numéricas
     log_ingresos  = log(ingreso_mensual),
     distancia_casa = as.numeric(distancia_casa),
+    satisfaccion_laboral_num = as.numeric(as.character(satisfaccion_laboral)),
     
     # Factores ordinales
     satisfaccion_ambiental = factor(satisfaccion_ambiental, levels = 1:4),
@@ -191,61 +192,6 @@ data <- rotacion_limpio %>%
   )
 
 str(data)
-
-
-# =========================
-# CREACIÓN DE VARIABLES
-# =========================
-
-#unique(data$rotacion)
-#unique(data$genero)
-#unique(data$estado_civil)
-#unique(data$departamento)
-#unique(data$satisfaccion_laboral)
-#unique(data$rendimiento_laboral)
-#unique(data$viaje_de_negocios)
-unique(data$cargo)
-
-str(data)
-
-data <- rotacion_limpio %>%
-  mutate(
-    # Variable objetivo binaria
-    rotacion = if_else(rotacion == "Si", 1, 0),
-    
-    # Categóricas nominales
-    genero = factor(genero, levels = c("F", "M")),
-    horas_extra = factor(horas_extra, levels = c("No", "Si")),
-    estado_civil = factor(estado_civil, levels = c("Soltero", "Casado", "Divorciado")),
-    departamento = factor(departamento, levels = c("Ventas", "IyD", "RH")),
-    viaje_de_negocios = factor(viaje_de_negocios,levels = c("No_Viaja", "Raramente", "Frecuentemente")),
-    campo_educacion = factor(campo_educacion, levels = c("Ciencias", "Otra", "Salud", "Mercadeo", "Tecnicos", "Humanidades")),
-    cargo = factor(cargo),
-    
-    # Numéricas
-    log_ingresos = log(ingreso_mensual),
-    distancia_casa = as.numeric(distancia_casa),
-    
-    # Ordinales: tratarlas como factor en logística suele ser más seguro
-    satisfaccion_ambiental = factor(satisfaccion_ambiental, levels = c(1, 2, 3, 4)),
-    satisfaccion_laboral = factor(satisfaccion_laboral, levels = c(1, 2, 3, 4)),
-    rendimiento_laboral = factor(rendimiento_laboral, levels = c(1, 2, 3, 4))
-  )
-
-# Ajustamos la variable cargo para disminuir el ruido
-data <- data %>%
-  mutate(
-    cargo_grupo = case_when(
-      cargo %in% c("Representante_Ventas", "Ejecutivo_Ventas") ~ "Ventas",
-      cargo %in% c("Recursos_Humanos") ~ "RH",
-      cargo %in% c("Tecnico_Laboratorio") ~ "Tec.lab",
-      TRUE ~ "Otros"
-    ),
-    cargo_grupo = factor(cargo_grupo)
-  )
-
-str(data)
-
 
 # -----------------------------------------------------------------------------
 # 1. ANALISIS EXPLORATORIO INICIAL 

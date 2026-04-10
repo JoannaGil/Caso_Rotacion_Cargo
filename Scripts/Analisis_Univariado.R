@@ -11,18 +11,93 @@ library(skimr)
 library(highcharter)
 
 
+
 # -----------------------------------------------------------------------------
-# 1. UNIVARIADO 
+#  UNIVARIADO 
 # -----------------------------------------------------------------------------
+# =========================
+#  VARIABLES NUMÉRICAS
+# =========================
+# =========================
+#  INGRESOS MENSUALES
+# =========================
 
 
-# =========================
-# 8. VARIABLES NUMÉRICAS
-# =========================
 
-# =========================
-# 8.1.INGRESOS MENSUALES
-# =========================
+
+
+# =========================================================
+# 1) PARTE REUTILIZABLE
+# =========================================================
+
+crear_boxplot_highcharter <- function(x, nombre_categoria = "Variable", titulo = "Boxplot") {
+  
+  # Quitar NA
+  x <- x[!is.na(x)]
+  
+  # Estadísticos del boxplot
+  bp <- boxplot.stats(x)
+  stats <- bp$stats
+  outliers <- bp$out
+  
+  # Estructura que necesita Highcharts:
+  # [mínimo, Q1, mediana, Q3, máximo]
+  box_data <- list(list(
+    low = stats[1],
+    q1 = stats[2],
+    median = stats[3],
+    q3 = stats[4],
+    high = stats[5]
+  ))
+  
+  # Outliers como puntos scatter
+  outlier_data <- lapply(outliers, function(valor) {
+    list(x = 0, y = valor)
+  })
+  
+  highchart() %>%
+    hc_chart(type = "boxplot") %>%
+    hc_title(text = titulo) %>%
+    hc_xAxis(categories = c(nombre_categoria)) %>%
+    hc_yAxis(title = list(text = nombre_categoria)) %>%
+    hc_add_series(
+      name = nombre_categoria,
+      data = box_data
+    ) %>%
+    hc_add_series(
+      type = "scatter",
+      name = "Atipicos",
+      data = outlier_data,
+      marker = list(fillColor = "#B2DF8A"),
+      tooltip = list(pointFormat = "Atipicos: {point.y}")
+    ) %>%
+    hc_tooltip(
+      useHTML = TRUE,
+      pointFormat = paste0(
+        "<b>Mínimo:</b> {point.low}<br>",
+        "<b>Q1:</b> {point.q1}<br>",
+        "<b>Mediana:</b> {point.median}<br>",
+        "<b>Q3:</b> {point.q3}<br>",
+        "<b>Máximo:</b> {point.high}"
+      )
+    )
+}
+
+
+
+
+
+
+
+
+# 
+# #Bivariado Salario 
+# boxplot_highcharter(
+#   data = data,
+#   variable = log_ingresos,
+#   titulo = "Log de ingresos según rotación",
+#   etiqueta_y = "Log del ingreso mensual"
+# )
 
 # =========================
 # PREPARAR DATOS
@@ -113,97 +188,104 @@ si_rot <- df_hextra %>%
 # FUNCIÓN REUTILIZABLE
 # =========================
 
-boxplot_highcharter <- function(data, variable, titulo, etiqueta_y) {
-  
-  var_name <- deparse(substitute(variable))
-  
-  data$rotacion_label <- ifelse(
-    data$rotacion == 0,
-    "0 = No rotación",
-    "1 = Sí rotación"
-  )
-  
-  box_stats <- data %>%
-    group_by(rotacion_label) %>%
-    summarise(
-      low = min(.data[[var_name]], na.rm = TRUE),
-      q1 = quantile(.data[[var_name]], 0.25, na.rm = TRUE),
-      median = median(.data[[var_name]], na.rm = TRUE),
-      q3 = quantile(.data[[var_name]], 0.75, na.rm = TRUE),
-      high = max(.data[[var_name]], na.rm = TRUE),
-      mean = mean(.data[[var_name]], na.rm = TRUE),
-      .groups = "drop"
-    )
-  
-  box_data <- lapply(1:nrow(box_stats), function(i) {
-    list(
-      as.numeric(box_stats$low[i]),
-      as.numeric(box_stats$q1[i]),
-      as.numeric(box_stats$median[i]),
-      as.numeric(box_stats$q3[i]),
-      as.numeric(box_stats$high[i])
-    )
-  })
-  
-  mean_data <- lapply(1:2, function(i) {
-    list(
-      x = i - 1,
-      y = as.numeric(box_stats$mean[i])
-    )
-  })
-  
-  highchart() %>%
-    hc_chart(type = "boxplot") %>%
-    hc_title(text = titulo) %>%
-    hc_xAxis(
-      categories = box_stats$rotacion_label,
-      title = list(text = "Rotación")
-    ) %>%
-    hc_yAxis(
-      title = list(text = etiqueta_y)
-    ) %>%
-    hc_add_series(
-      name = "Distribución",
-      data = box_data,
-      tooltip = list(
-        pointFormat = "<b>Media:</b> {point.y:.2f}"
-      ),
-      enableMouseTracking = FALSE
-    ) %>%
-    hc_add_series(
-      name = "Media",
-      type = "scatter",
-      data = mean_data,
-      color = "red",
-      marker = list(radius = 5, symbol = "circle"),
-      dataLabels = list(
-        enabled = TRUE,
-        formatter = JS(
-          "function() { return Highcharts.numberFormat(this.y, 2); }"
-        ),
-        style = list(
-          color = "red",
-          fontWeight = "bold",
-          textOutline = "none"
-        ),
-        y = -10
-      ),
-      tooltip = list(enabled = FALSE)
-    ) %>%
-    hc_add_series(
-      name = "Línea de medias",
-      type = "line",
-      data = mean_data,
-      color = "red",
-      marker = list(enabled = FALSE),
-      enableMouseTracking = FALSE,
-      showInLegend = FALSE
-    )
-}
-
-
-
-
+# boxplot_highcharter <- function(data, variable, titulo, etiqueta_y) {
+# 
+#   var_name <- deparse(substitute(variable))
+# 
+#   data$rotacion_label <- ifelse(
+#     data$rotacion == 0,
+#     "0 = No rotación",
+#     "1 = Sí rotación"
+#   )
+# 
+#   box_stats <- data %>%
+#     group_by(rotacion_label) %>%
+#     summarise(
+#       low = min(.data[[var_name]], na.rm = TRUE),
+#       q1 = quantile(.data[[var_name]], 0.25, na.rm = TRUE),
+#       median = median(.data[[var_name]], na.rm = TRUE),
+#       q3 = quantile(.data[[var_name]], 0.75, na.rm = TRUE),
+#       high = max(.data[[var_name]], na.rm = TRUE),
+#       mean = mean(.data[[var_name]], na.rm = TRUE),
+#       .groups = "drop"
+#     )
+# 
+#   box_data <- lapply(1:nrow(box_stats), function(i) {
+#     list(
+#       as.numeric(box_stats$low[i]),
+#       as.numeric(box_stats$q1[i]),
+#       as.numeric(box_stats$median[i]),
+#       as.numeric(box_stats$q3[i]),
+#       as.numeric(box_stats$high[i])
+#     )
+#   })
+# 
+#   mean_data <- lapply(1:2, function(i) {
+#     list(
+#       x = i - 1,
+#       y = as.numeric(box_stats$mean[i])
+#     )
+#   })
+# 
+#   highchart() %>%
+#     hc_chart(type = "boxplot") %>%
+#     hc_title(text = titulo) %>%
+#     hc_xAxis(
+#       categories = box_stats$rotacion_label,
+#       title = list(text = "Rotación")
+#     ) %>%
+#     hc_yAxis(
+#       title = list(text = etiqueta_y)
+#     ) %>%
+#     hc_add_series(
+#       name = "Distribución",
+#       data = box_data,
+#       tooltip = list(
+#         pointFormat = "<b>Media:</b> {point.y:.2f}"
+#       ),
+#       enableMouseTracking = FALSE
+#     ) %>%
+#     hc_add_series(
+#       name = "Media",
+#       type = "scatter",
+#       data = mean_data,
+#       color = "red",
+#       marker = list(radius = 5, symbol = "circle"),
+#       dataLabels = list(
+#         enabled = TRUE,
+#         formatter = JS(
+#           "function() { return Highcharts.numberFormat(this.y, 2); }"
+#         ),
+#         style = list(
+#           color = "red",
+#           fontWeight = "bold",
+#           textOutline = "none"
+#         ),
+#         y = -10
+#       ),
+#       tooltip = list(enabled = FALSE)
+#     ) %>%
+#     hc_add_series(
+#       name = "Línea de medias",
+#       type = "line",
+#       data = mean_data,
+#       color = "red",
+#       marker = list(enabled = FALSE),
+#       enableMouseTracking = FALSE,
+#       showInLegend = FALSE
+#     )
+# }
+# 
+# 
+# 
+# boxplot_highcharter(
+#   data = data,
+#   variable = antiguedad_cargo,
+#   titulo = "Antigüedad en el cargo según rotación",
+#   etiqueta_y = "Años en el cargo"
+# )
+# 
+# 
 
 
 # -----------------------------------------------------------------------------
