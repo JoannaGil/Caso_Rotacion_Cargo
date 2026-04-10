@@ -421,68 +421,51 @@ highchart() %>%
 
 
 
+### Distribucion Cargo / rotacion 
 
+<p>
 
-```{r Graf_var_horas_extras, echo=FALSE, message=FALSE}
+El análisis de la rotación según el cargo evidencia diferencias relevantes entre los distintos roles dentro de la organización. En general, algunos cargos presentan mayores niveles de rotación en parte debido a su mayor representación en la plantilla, lo que incrementa la probabilidad de observar salidas en términos absolutos. Sin embargo, destaca el caso de Recursos Humanos, donde se observa una proporción relativamente alta de rotación en comparación con otros cargos, lo que sugiere un comportamiento distinto al esperado por su tamaño. Asimismo, cargos como Representante de Ventas y Técnico de Laboratorio también muestran niveles elevados de rotación, mientras que otros roles, como Gerente o Director de Investigación, presentan proporciones más bajas. En conjunto, estos resultados indican que la rotación no se distribuye de manera uniforme entre los cargos, evidenciando posibles diferencias en dinámicas laborales o condiciones asociadas a cada rol.
+
+</p>
+
+```{r Graf_cargo_rotacion, echo=FALSE, message=FALSE}
+library(highcharter)
+
+# Tabla de proporciones
+tabla_cargo <- prop.table(
+  table(data$cargo, data$rotacion),
+  1
+) * 100
+
+# Extraer datos
+categorias <- rownames(tabla_cargo)
+no_rot <- as.numeric(tabla_cargo[, "0"])
+si_rot <- as.numeric(tabla_cargo[, "1"])
 
 # Gráfico
 highchart() %>%
   hc_chart(type = "column") %>%
-  hc_plotOptions(column = list(stacking = "percent")) %>%
-  hc_title(text = "Proporción de rotación según horas extra") %>%
-  hc_xAxis(categories = c("No", "Si")) %>%
-  hc_yAxis(
-    labels = list(format = "{value:.0%}"),
-    title = list(text = "Proporción")
+  hc_plotOptions(
+    column = list(
+      stacking = "percent",
+      dataLabels = list(
+        enabled = TRUE,
+        format = "{point.percentage:.1f}%"
+      )
+    )
   ) %>%
-  hc_add_series(
-    name = "No rotación",
-    data = no_rot
-  ) %>%
-  hc_add_series(
-    name = "Sí rotación",
-    data = si_rot
-  ) %>%
-  hc_tooltip(
-    pointFormat = "<b>{series.name}:</b> {point.percentage:.2f}%"
-  )
-
-#table(data$horas_extra)
-#str(data$horas_extra)
-  
-```
-
-#Estado Civil - Moderada
-
-<p>
-El estado civil presenta diferencias en los niveles de rotación, destacándose un mayor porcentaje en el grupo de empleados divorciados. Aunque los grupos de solteros y casados muestran niveles similares y relativamente bajos de rotación, la variabilidad observada sugiere una relación moderada entre esta variable y la rotación, posiblemente influenciada por factores personales.
-</p>
-
-```{r Graf_var_estado_civil, echo=FALSE, message=FALSE}
-
-df_estado <- data %>%
-  count(estado_civil, rotacion) %>%
-  mutate(
-    rotacion_label = ifelse(rotacion == 0, "No rotación", "Sí rotación")
-  )
-civil_levels <- unique(data$estado_civil)
-
-df_estado <- data %>%
-  count(estado_civil, rotacion) %>%
-  mutate(
-    rotacion_label = ifelse(rotacion == 0, "No rotación", "Sí rotación")
-  )
-
-highchart() %>%
-  hc_chart(type = "column") %>%
-  hc_plotOptions(column = list(stacking = "percent")) %>%
-  hc_title(text = "Proporción de rotación según estado civil") %>%
+  hc_title(text = "Rotación de empleados según cargo") %>%
   hc_xAxis(
-    categories = civil_levels,
-    title = list(text = "Estado civil")
+    categories = categorias,
+    title = list(text = "Cargos"),
+    labels = list(
+      rotation = -45,
+      style = list(fontSize = "11px")
+    )
   ) %>%
   hc_yAxis(
-    labels = list(format = "{value:.0%}"),
+    labels = list(format = "{value:.0f}%"),
     title = list(text = "Proporción")
   ) %>%
   hc_add_series(
@@ -493,15 +476,11 @@ highchart() %>%
     name = "Sí rotación",
     data = si_rot
   ) %>%
+  hc_colors(c("#A6CEE3", "#FB9A99")) %>%
   hc_tooltip(
-    pointFormat = "<b>{series.name}:</b> {point.percentage:.2f}%"
+    pointFormat = "<b>{series.name}:</b> {point.percentage:.1f}%"
   )
-
-#table(data$estado_civil)
-#str(data$estado_civil)
-
 ```
-
 
 
 
