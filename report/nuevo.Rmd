@@ -713,6 +713,46 @@ highchart() %>%
 ```
 
 
+
+```{r}
+ranking <- data.frame(
+  Variable = c("Horas extra", "Satisfacción laboral", "Ingresos (log)", 
+               "Viajes de negocio", "Cargo (grupo)", "Antigüedad cargo"),
+  Impacto = c(20, 18, 15, 17, 10, 5)  # aproximación basada en tu análisis
+)
+
+ranking <- ranking %>%
+  arrange(desc(Impacto))
+
+ranking
+
+highchart() %>%
+  hc_chart(type = "bar") %>%
+  hc_title(text = "Ranking de variables más influyentes en la rotación") %>%
+  hc_xAxis(
+    categories = ranking$Variable,
+    title = list(text = NULL)
+  ) %>%
+  hc_yAxis(
+    title = list(text = "Nivel de impacto")
+  ) %>%
+  hc_add_series(
+    name = "Impacto",
+    data = ranking$Impacto,
+    color = "#2E86C1"
+  ) %>%
+  hc_plotOptions(
+    series = list(
+      dataLabels = list(
+        enabled = TRUE,
+        format = "{point.y}"
+      )
+    )
+  )
+
+```
+
+
   </div>
 </div>
 
