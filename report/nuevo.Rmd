@@ -1,0 +1,755 @@
+---
+title: "Reporte interactivo"
+output: html_document
+---
+
+```{r, echo=FALSE, results='asis'}
+source("../Scripts/ui_css.R")
+source("../Scripts/ui_html.R")
+source("../Scripts/ui_js.R")
+
+```
+
+
+```{r, include=FALSE, message=FALSE, warning=FALSE}
+source("../Scripts/Analisis_Exploratorio_Datos.R")
+source("../Scripts/Analisis_Univariado.R")
+```
+
+
+<div id="Introduccion" class="panel-seccion" data-title="Introduccion">
+  <div class="contenido-seccion">
+
+El conjunto de datos está compuesto por aproximadamente 23 variables, por lo que realizar un análisis detallado de cada una de ellas no resulta eficiente ni alineado con el objetivo del proyecto. En este contexto, se llevó a cabo un proceso de selección de variables orientado a identificar aquellas con mayor capacidad explicativa respecto a la rotación de empleados.
+
+Este proceso se desarrolló a partir de dos enfoques complementarios. En primer lugar, se incorporó el criterio de negocio, identificando variables que, desde la perspectiva de la gestión del talento humano, podrían estar relacionadas con la rotación, tales como las condiciones laborales, el tipo de cargo y las características individuales de los empleados. En segundo lugar, se realizó una exploracion estadística preliminar, mediante el cual se evaluó la relación individual entre cada variable y la variable objetivo, permitiendo priorizar aquellas con mayor evidencia de asociación.
+
+La combinación de estos enfoques permitió realizar una selección más robusta, evitando depender exclusivamente del criterio subjetivo o de los resultados estadísticos aislados. Como resultado, se seleccionaron seis variables para el análisis detallado, distribuidas en tres categóricas y tres numéricas, lo que permite abordar el fenómeno de rotación desde diferentes dimensiones y facilita una interpretación más clara en las etapas posteriores del análisis y modelado.
+
+
+  </div>
+</div>
+
+<div id="analisisUnivariado" class="panel-seccion" data-title="Análisis Univariado">
+  <div class="contenido-seccion">
+
+### Distribución del Ingreso Mensual
+
+<p>
+
+La distribución del ingreso mensual revela una asimetría positiva o sesgo a la derecha, comportamiento esperado y común en variables salariales dentro de cualquier organización. La mayor concentración de empleados se ubica en el rango de 2.000 a 3.000, con aproximadamente 360 personas, lo que indica que la mayoría de la plantilla percibe salarios relativamente bajos. A medida que el ingreso aumenta, la frecuencia disminuye de forma sostenida, reflejando la estructura jerárquica típica de una empresa donde los salarios altos corresponden a una minoría. En este sentido, la mediana resulta una medida más representativa que la media, ya que esta última tiende a inflarse por los valores extremos del extremo superior. Adicionalmente, se observa un repunte en el rango de 19.000 a 20.000, que responde de forma natural a la presencia de cargos de mayor jerarquía como directores y ejecutivos, quienes representan una proporción pequeña pero diferenciada dentro de la organización. Dado este comportamiento asimétrico, se utilizará la variable **log_ingresos** en el modelo, transformación que ya fue aplicada durante el preprocesamiento y que permite estabilizar la varianza y mejorar el ajuste de la regresión logística.
+
+</p>
+
+
+```{r hist_var_ingresos, echo=FALSE, message=FALSE}
+
+#Histograma Ingreso mensual
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_title(text = "DISTRIBUCION DEL INGRESO MENSUAL") %>%
+  hc_xAxis(
+    categories = df_hist_ingreso$rango,
+    title = list(text = "Rango de Salario")
+  ) %>%
+  hc_yAxis(
+    title = list(text = "Numero de empleados")
+  ) %>%
+  hc_add_series(
+    name = "Histograma - Rando de empleado por ingreso mensual",
+    data = df_hist_ingreso$frecuencia
+  ) %>%
+  hc_tooltip(
+    useHTML = TRUE,
+    pointFormat = paste0(
+      "<b>Rango:</b> {point.category}<br>",
+      "<b>Empleados:</b> {point.y}"
+    )
+  ) %>%
+  hc_plotOptions(
+    column = list(
+      borderWidth = 1
+    )
+  )
+
+
+```
+
+
+```{r Boxplot_var_ingresos, echo=FALSE, message=FALSE}
+
+#BoxPlot Ingreso mensual
+crear_boxplot_highcharter(
+  x = data$ingreso_mensual,
+  nombre_categoria = "Ingreso mensual",
+  titulo = "BOXPLOT - INGRESO MENSUAL"
+)
+```
+
+
+### Distribución del Antigüedad en el cargo
+
+
+<p>
+
+La distribución de la antigüedad en el cargo muestra que la mayor proporción de empleados se concentra en los rangos de 2 a 3 años (34.5%) y 6 o más años (35.5%), lo que sugiere la coexistencia de dos grupos predominantes: empleados relativamente recientes y empleados con alta permanencia en la organización. Por otro lado, se observa una menor participación en el rango de 4 a 5 años (9.5%), lo que podría indicar una posible transición o reducción en ese tramo intermedio. Asimismo, el 20.5% de los empleados presenta una antigüedad de 0 a 1 año, lo que refleja una proporción relevante de personal con corta permanencia. En conjunto, estos patrones evidencian una distribución no uniforme de la antigüedad, lo que podría ser consistente con dinámicas de rotación o retención diferenciadas, aunque sin permitir inferir causas específicas en esta etapa del análisis.
+
+</p>
+
+
+```{r hist_var_antiguedad_Cargo, echo=FALSE, message=FALSE}
+
+# Crear rangos
+df_antiguedad_cargo <- data %>%
+  mutate(
+    rango_antiguedad = case_when(
+      antiguedad_cargo <= 1 ~ "0-1 años",
+      antiguedad_cargo <= 3 ~ "2-3 años",
+      antiguedad_cargo <= 5 ~ "4-5 años",
+      TRUE ~ "6+ años"
+    )
+  ) %>%
+  count(rango_antiguedad) %>%
+  mutate(porcentaje = n / sum(n) * 100)
+
+# Gráfico
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_title(text = "DISTRIBUCION ANTIGUEDAD DEL EMPLEADO EN EL CARGO") %>%
+  hc_xAxis(categories = df_antiguedad_cargo$rango_antiguedad,
+           title = list(text = "Rango de antigüedad")) %>%
+  hc_yAxis(title = list(text = "%")) %>%
+  hc_add_series(
+    name = "% empleados",
+    data = round(df_antiguedad_cargo$porcentaje, 1),
+    colorByPoint = TRUE
+  ) %>%
+  hc_plotOptions(
+    series = list(
+      dataLabels = list(enabled = TRUE, format = "{point.y}%")
+    )
+  ) %>%
+  hc_colors(c("#A6CEE3", "#B2DF8A", "#FB9A99", "#FDBF6F"))
+
+
+
+```
+
+
+### Distribución de la Satisfaccion Laboral
+
+<p>
+
+La distribución de la satisfacción laboral muestra que la mayor proporción de empleados se concentra en los niveles 3 (30.1%) y 4 (31.2%), lo que indica una tendencia general hacia niveles de satisfacción relativamente altos dentro de la organización. Por otro lado, los niveles más bajos de satisfacción, correspondientes a 1 (19.7%) y 2 (19.0%), presentan una menor participación, aunque en conjunto representan cerca del 40% de los empleados. En términos generales, la variable evidencia una distribución inclinada hacia valores altos, sin presentar concentraciones extremas en un solo nivel, lo que sugiere una dispersión moderada en los niveles de satisfacción laboral.
+
+
+</p>
+
+
+```{r Bar_var_Satisf_laboral, echo=FALSE, message=FALSE}
+
+df_satisfacion_lab <- data %>%
+  count(satisfaccion_laboral_num) %>%
+  mutate(porcentaje = n / sum(n) * 100)
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_title(text = "DISTRIBUCION SATISFACCION LABORAL") %>%
+  hc_xAxis(categories = df_satisfacion_lab$satisfaccion_laboral_num) %>%
+  hc_yAxis(title = list(text = "% empleados")) %>%
+  hc_add_series(
+    name = "% empleados",
+    data = round(df_satisfacion_lab$porcentaje, 1),
+    colorByPoint = TRUE
+  ) %>%
+  hc_colors(c("#FB9A99", "#FDBF6F", "#A6CEE3", "#B2DF8A")) %>%
+  hc_plotOptions(
+    series = list(
+      dataLabels = list(enabled = TRUE, format = "{point.y}%")
+    )
+  )
+
+```
+
+
+
+### Distribucion Horas Extras - Fuerte
+
+<p>
+
+La distribución de las horas extra muestra que la mayoría de los empleados, equivalente al 71.7%, no realiza horas adicionales, mientras que el 28.3% sí reporta trabajar horas extra. Esta diferencia evidencia una clara predominancia de empleados que mantienen su jornada laboral dentro de los horarios establecidos. No obstante, la proporción de empleados que realiza horas extra es significativa, representando cerca de un tercio de la población, lo que indica que este comportamiento no es marginal dentro de la organización. En conjunto, la variable presenta una distribución desbalanceada hacia la categoría “No”, aunque conserva una participación relevante en la categoría “Sí”.
+</p>
+
+```{r Bar_var_horasextras, echo=FALSE, message=FALSE}
+
+df_horas_extra <- data %>%
+  count(horas_extra) %>%
+  mutate(porcentaje = n / sum(n) * 100)
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_title(text = "DISTRIBUCION DE HORAS EXTRAS") %>%
+  hc_xAxis(
+    categories = df_horas_extra$horas_extra,
+    title = list(text = "Horas extra")
+  ) %>%
+  hc_yAxis(title = list(text = "% empleados")) %>%
+  hc_add_series(
+    name = "% empleados",
+    data = round(df_horas_extra$porcentaje, 1),
+    colorByPoint = TRUE
+  ) %>%
+  hc_colors(c("#A6CEE3", "#FB9A99")) %>%
+  hc_plotOptions(
+    series = list(
+      dataLabels = list(enabled = TRUE, format = "{point.y}%")
+    )
+  )
+```
+
+
+
+### Distribucion del Cargo 
+
+
+<p>
+
+La distribución por cargo evidencia que la mayor proporción de empleados se concentra en los roles de Ejecutivo de Ventas (22.2%), Investigador Científico (19.9%) y Técnico de Laboratorio (17.6%), los cuales en conjunto representan una parte significativa de la población analizada. En contraste, otros cargos como Director de Manufactura (9.9%) y Representante de Salud (8.9%) presentan una participación intermedia, mientras que posiciones como Gerente (6.9%), Representante de Ventas (5.6%), Director de Investigación (5.4%) y Recursos Humanos (3.5%) muestran una menor proporción relativa. En general, la variable presenta una distribución heterogénea, con una clara concentración en ciertos cargos operativos y comerciales, y una menor representación en roles directivos o especializados.
+
+
+</p>
+
+```{r Bar_var_cargo, echo=FALSE, message=FALSE}
+
+df_cargo <- data %>%
+  count(cargo) %>%
+  mutate(porcentaje = n / sum(n) * 100) %>%
+  arrange(desc(porcentaje))
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_title(text = "DISTRIBUCION DE CARGO DEL EMPLEADO") %>%
+  hc_xAxis(
+    categories = df_cargo$cargo,
+    title = list(text = "Cargo"),
+    labels = list(
+      rotation = -45,   
+      style = list(fontSize = "11px")
+    )
+  ) %>%
+  hc_yAxis(title = list(text = "% empleados")) %>%
+  hc_add_series(
+    name = "% empleados",
+    data = round(df_cargo$porcentaje, 1),
+    color = "#5DADE2"   
+  ) %>%
+  hc_plotOptions(
+    column = list(
+      pointPadding = 0.1,   
+      groupPadding = 0.05
+    ),
+    series = list(
+      dataLabels = list(enabled = TRUE, format = "{point.y}%")
+    )
+  )
+```
+
+
+### Distribucion de viaje de negocios
+
+<p>
+
+La distribución de los viajes de negocios muestra que la mayoría de los empleados, equivalente al 71%, realiza viajes de manera rara vez, lo que indica que esta es la condición predominante dentro de la organización. Por otro lado, el 18.8% de los empleados viaja frecuentemente, mientras que una proporción menor, correspondiente al 10.2%, no realiza viajes de negocio. En conjunto, la variable presenta una clara concentración en la categoría intermedia, con menor participación en los extremos, lo que sugiere que la mayor parte del personal tiene una exposición ocasional a desplazamientos laborales.
+
+</p>
+
+```{r Bar_var_viajesNegocios, echo=FALSE, message=FALSE}
+df_viaje <- data %>%
+  count(viaje_de_negocios) %>%
+  mutate(porcentaje = n / sum(n) * 100)
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_title(text = "DISTRIBUCION DE VIAJES DE NEGOCIOS") %>%
+  hc_xAxis(
+    categories = df_viaje$viaje_de_negocios,
+    title = list(text = "Frecuencia de viaje")
+  ) %>%
+  hc_yAxis(title = list(text = "% empleados")) %>%
+  hc_add_series(
+    name = "% empleados",
+    data = round(df_viaje$porcentaje, 1),
+    colorByPoint = TRUE
+  ) %>%
+  hc_colors(c("#B2DF8A", "#A6CEE3", "#FB9A99")) %>%
+  hc_plotOptions(
+    series = list(
+      dataLabels = list(enabled = TRUE, format = "{point.y}%")
+    )
+  )
+```
+
+  </div>
+</div>
+
+  
+<div id="analisisBivariado" class="panel-seccion" data-title="Análisis Bivariado">
+  <div class="contenido-seccion">
+
+### Distribucion Horas extras / rotacion 
+
+<p>
+
+El análisis bivariado entre la variable horas extra y la rotación revela una diferencia significativa en las proporciones de salida entre los grupos. En los empleados que no realizan horas extra, la proporción de rotación es de 10.4%, mientras que en aquellos que sí realizan horas adicionales asciende a 30.5%. Esta diferencia de aproximadamente 20 puntos porcentuales sugiere una asociación relevante entre la realización de horas extra y la probabilidad de rotación. No obstante, dado el carácter descriptivo del análisis, estos resultados no permiten establecer una relación causal, sino únicamente evidenciar un patrón diferenciado entre los grupos.
+
+</p>
+
+
+```{r Graf_horasextras_rotacion, echo=FALSE, message=FALSE}
+
+tabla_horas <- data %>%
+  count(horas_extra, rotacion) %>%
+  group_by(horas_extra) %>%
+  mutate(prop = n / sum(n) * 100) %>%
+  ungroup()
+
+#tabla_horas
+
+no_rot <- tabla_horas %>%
+  filter(rotacion == 0) %>%
+  pull(prop)
+
+si_rot <- tabla_horas %>%
+  filter(rotacion == 1) %>%
+  pull(prop)
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_plotOptions(
+    column = list(
+      stacking = "percent",
+      dataLabels = list(
+        enabled = TRUE,
+        format = "{point.percentage:.1f}%"
+      )
+    )
+  ) %>%
+  hc_title(text = "Proporción de rotación según horas extra") %>%
+  hc_xAxis(categories = c("No", "Si")) %>%
+  hc_yAxis(
+    labels = list(format = "{value:.0f}%"),
+    title = list(text = "Proporción")
+  ) %>%
+  hc_add_series(
+    name = "No rotación",
+    data = no_rot
+  ) %>%
+  hc_add_series(
+    name = "Sí rotación",
+    data = si_rot
+  ) %>%
+  hc_colors(c("#A6CEE3", "#B2DF8A")) %>% 
+  hc_tooltip(
+    pointFormat = "<b>{series.name}:</b> {point.percentage:.1f}%"
+  )
+
+
+```
+
+
+### Distribucion Satisfaccion Laboral / rotacion 
+
+
+<p>
+El análisis de la rotación según el nivel de satisfacción laboral evidencia una relación inversa entre ambas variables. A medida que aumenta el nivel de satisfacción, la proporción de empleados que rotan tiende a disminuir, mientras que la permanencia en la organización se incrementa. En los niveles más bajos de satisfacción se observa una mayor proporción de rotación, mientras que en los niveles más altos predomina la no rotación. Este patrón sugiere que la satisfacción laboral podría estar asociada con la decisión de permanencia de los empleados, mostrando una tendencia consistente a lo largo de los distintos niveles.
+</p>
+
+```{r Graf_saf_laboral_rotacion, echo=FALSE, message=FALSE}
+library(tidyr) 
+
+tabla_sat <- prop.table(
+  table(data$satisfaccion_laboral_num, data$rotacion),
+  1
+) * 100
+
+categorias <- rownames(tabla_sat)
+no_rot <- as.numeric(tabla_sat[, "0"])
+si_rot <- as.numeric(tabla_sat[, "1"])
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_plotOptions(
+    column = list(
+      stacking = "percent",
+      dataLabels = list(
+        enabled = TRUE,
+        format = "{point.percentage:.1f}%"
+      )
+    )
+  ) %>%
+  hc_title(text = "Relación entre satisfacción laboral y rotación de empleados") %>%
+  hc_xAxis(
+    categories = categorias,
+    title = list(text = "Nivel de satisfacción laboral")
+  ) %>%
+  hc_yAxis(
+    labels = list(format = "{value:.0f}%"),
+    title = list(text = "Proporción")
+  ) %>%
+  hc_add_series(
+    name = "No rotación",
+    data = no_rot
+  ) %>%
+  hc_add_series(
+    name = "Sí rotación",
+    data = si_rot
+  ) %>%
+  hc_colors(c("#A6CEE3", "#FB9A99")) %>%
+  hc_tooltip(
+    pointFormat = "<b>{series.name}:</b> {point.percentage:.1f}%"
+  )
+```
+
+
+
+
+### Distribucion Cargo / rotacion 
+
+<p>
+
+El análisis de la rotación según el cargo evidencia diferencias relevantes entre los distintos roles dentro de la organización. En general, algunos cargos presentan mayores niveles de rotación en parte debido a su mayor representación en la plantilla, lo que incrementa la probabilidad de observar salidas en términos absolutos. Sin embargo, destaca el caso de Recursos Humanos, donde se observa una proporción relativamente alta de rotación en comparación con otros cargos, lo que sugiere un comportamiento distinto al esperado por su tamaño. Asimismo, cargos como Representante de Ventas y Técnico de Laboratorio también muestran niveles elevados de rotación, mientras que otros roles, como Gerente o Director de Investigación, presentan proporciones más bajas. En conjunto, estos resultados indican que la rotación no se distribuye de manera uniforme entre los cargos, evidenciando posibles diferencias en dinámicas laborales o condiciones asociadas a cada rol.
+
+</p>
+
+```{r Graf_cargo_rotacion, echo=FALSE, message=FALSE}
+library(highcharter)
+
+# Tabla de proporciones
+tabla_cargo <- prop.table(
+  table(data$cargo, data$rotacion),
+  1
+) * 100
+
+# Extraer datos
+categorias <- rownames(tabla_cargo)
+no_rot <- as.numeric(tabla_cargo[, "0"])
+si_rot <- as.numeric(tabla_cargo[, "1"])
+
+# Gráfico
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_plotOptions(
+    column = list(
+      stacking = "percent",
+      dataLabels = list(
+        enabled = TRUE,
+        format = "{point.percentage:.1f}%"
+      )
+    )
+  ) %>%
+  hc_title(text = "Rotación de empleados según cargo") %>%
+  hc_xAxis(
+    categories = categorias,
+    title = list(text = "Cargos"),
+    labels = list(
+      rotation = -45,
+      style = list(fontSize = "11px")
+    )
+  ) %>%
+  hc_yAxis(
+    labels = list(format = "{value:.0f}%"),
+    title = list(text = "Proporción")
+  ) %>%
+  hc_add_series(
+    name = "No rotación",
+    data = no_rot
+  ) %>%
+  hc_add_series(
+    name = "Sí rotación",
+    data = si_rot
+  ) %>%
+  hc_colors(c("#A6CEE3", "#FB9A99")) %>%
+  hc_tooltip(
+    pointFormat = "<b>{series.name}:</b> {point.percentage:.1f}%"
+  )
+```
+
+
+### Distribucion de viajes de negocios / rotacion 
+
+<p>
+El análisis de la rotación según la frecuencia de viajes de negocios evidencia una relación creciente entre ambas variables. Los empleados que no realizan viajes presentan una proporción de rotación aproximada del 8%, mientras que aquellos que viajan raramente muestran un incremento hasta cerca del 15%. Esta proporción aumenta de forma considerable en el grupo que viaja frecuentemente, alcanzando valores cercanos al 25%. En contraste, la proporción de empleados que no rotan disminuye progresivamente a medida que aumenta la frecuencia de viajes. Estos resultados muestran un patrón claro y consistente, donde una mayor exposición a viajes de negocios se asocia con una mayor probabilidad de rotación dentro de la organización.
+</p>
+
+```{r Graf_viajes_de_negocios_rotacion, echo=FALSE, message=FALSE}
+
+
+df_viaje <- data %>%
+  count(viaje_de_negocios, rotacion) %>%
+  mutate(
+    rotacion_label = ifelse(rotacion == 0, "No rotación", "Sí rotación")
+  )
+
+
+viaje_levels <- levels(data$viaje_de_negocios)
+
+no_rot <- df_viaje %>%
+  filter(rotacion_label == "No rotación") %>%
+  arrange(viaje_de_negocios) %>%
+  pull(n)
+
+si_rot <- df_viaje %>%
+  filter(rotacion_label == "Sí rotación") %>%
+  arrange(viaje_de_negocios) %>%
+  pull(n)
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_plotOptions(
+    column = list(
+      stacking = "percent",
+      dataLabels = list(
+        enabled = TRUE,
+        format = "{point.percentage:.1f}%"
+      )
+    )
+  ) %>%
+  hc_title(text = "Proporción de rotación según viajes de negocios") %>%
+  hc_xAxis(
+    categories = viaje_levels,
+    title = list(text = "Viajes de negocios")
+  ) %>%
+  hc_yAxis(
+    labels = list(format = "{value:.0%}"),
+    title = list(text = "Proporción")
+  ) %>%
+  hc_add_series(
+    name = "No rotación",
+    data = no_rot
+  ) %>%
+  hc_add_series(
+    name = "Sí rotación",
+    data = si_rot
+  ) %>%
+  hc_tooltip(
+    pointFormat = "<b>{series.name}:</b> {point.percentage:.2f}%"
+  )
+
+
+
+```
+
+### Distribucion de Log Ingresos / rotacion 
+
+<p>
+El análisis de la distribución del logaritmo de los ingresos según la rotación evidencia diferencias claras entre ambos grupos. Los empleados que no presentan rotación muestran una media de 8.61, mientras que aquellos que sí rotan presentan una media inferior de 8.25, lo que indica una diferencia aproximada de 0.36 unidades en escala logarítmica. Asimismo, la mediana sigue un comportamiento similar, siendo más alta en el grupo sin rotación. En términos de dispersión, ambos grupos presentan rangos relativamente comparables, aunque el grupo sin rotación muestra una ligera mayor concentración en valores superiores. En conjunto, estos resultados sugieren que niveles más altos de ingreso se asocian con una menor probabilidad de rotación.
+
+</p>
+
+
+```{r Graf_log_ingresos_rotacion, echo=FALSE, message=FALSE}
+
+# Estadísticos por grupo
+stats_0 <- boxplot.stats(data$log_ingresos[data$rotacion == 0])
+stats_1 <- boxplot.stats(data$log_ingresos[data$rotacion == 1])
+
+# Medias
+media_0 <- mean(data$log_ingresos[data$rotacion == 0], na.rm = TRUE)
+media_1 <- mean(data$log_ingresos[data$rotacion == 1], na.rm = TRUE)
+
+# Medianas
+mediana_0 <- stats_0$stats[3]
+mediana_1 <- stats_1$stats[3]
+
+highchart() %>%
+  hc_chart(type = "boxplot") %>%
+  hc_title(text = "Distribución de log_ingresos según rotación") %>%
+  hc_xAxis(
+    categories = c("No rotación", "Sí rotación"),
+    title = list(text = "Rotación")
+  ) %>%
+  hc_yAxis(
+    title = list(text = "Log de ingresos")
+  ) %>%
+  hc_add_series(
+    name = "Boxplot",
+    data = list(
+      list(
+        low = stats_0$stats[1],
+        q1 = stats_0$stats[2],
+        median = stats_0$stats[3],
+        q3 = stats_0$stats[4],
+        high = stats_0$stats[5]
+      ),
+      list(
+        low = stats_1$stats[1],
+        q1 = stats_1$stats[2],
+        median = stats_1$stats[3],
+        q3 = stats_1$stats[4],
+        high = stats_1$stats[5]
+      )
+    ),
+    tooltip = list(
+      pointFormat = paste0(
+        "<b>Mínimo:</b> {point.low:.2f}<br>",
+        "<b>Q1:</b> {point.q1:.2f}<br>",
+        "<b>Mediana:</b> {point.median:.2f}<br>",
+        "<b>Q3:</b> {point.q3:.2f}<br>",
+        "<b>Máximo:</b> {point.high:.2f}"
+      )
+    )
+  ) %>%
+  hc_add_series(
+    type = "scatter",
+    name = "Valores atípicos",
+    data = c(
+      lapply(stats_0$out, function(x) list(x = 0, y = x)),
+      lapply(stats_1$out, function(x) list(x = 1, y = x))
+    ),
+    marker = list(
+      fillColor = "red",
+      lineColor = "black",
+      lineWidth = 1,
+      radius = 4
+    ),
+    tooltip = list(
+      pointFormat = "<b>Atípico:</b> {point.y:.2f}"
+    )
+  ) %>%
+  hc_add_series(
+    type = "scatter",
+    name = "Media",
+    data = list(
+      list(x = 0, y = media_0),
+      list(x = 1, y = media_1)
+    ),
+    marker = list(
+      symbol = "diamond",
+      radius = 6,
+      fillColor = "green"
+    ),
+    dataLabels = list(
+      enabled = TRUE,
+      format = "Media: {point.y:.2f}"
+    ),
+    tooltip = list(
+      pointFormat = "<b>Media:</b> {point.y:.2f}"
+    )
+  ) %>%
+  hc_add_series(
+    type = "line",
+    name = "Diferencia entre medianas",
+    data = list(
+      list(x = 0, y = mediana_0),
+      list(x = 1, y = mediana_1)
+    ),
+    dashStyle = "ShortDash",
+    lineWidth = 2,
+    marker = list(enabled = TRUE),
+    dataLabels = list(
+      enabled = TRUE,
+      format = "Mediana: {point.y:.2f}"
+    ),
+    tooltip = list(
+      pointFormat = "<b>Mediana:</b> {point.y:.2f}"
+    )
+  )
+
+```
+
+### Distribucion de Antigüedad de cargo / rotacion 
+
+<p>
+
+El análisis de la rotación según el grupo de cargo evidencia diferencias importantes entre las distintas áreas de la organización. El grupo de Ventas presenta la mayor proporción de rotación, con valores cercanos al 30%, lo que lo posiciona como el segmento con mayor riesgo de salida de empleados. Por su parte, el grupo de Tecnico de Laboratorio muestra una proporción intermedia de rotación, alrededor del 24%, mientras que el grupo de Recursos Humanos (RH) presenta niveles considerablemente más bajos, cercanos al 15%. En contraste, los demás cargos agrupados en “Otros” mantienen una proporción de rotación más moderada. En conjunto, estos resultados evidencian que la rotación no se distribuye de manera homogénea entre los grupos de cargo, destacándose particularmente el comportamiento del área de Ventas.
+
+</p>
+
+```{r Graf_antiguedad_cargo_rotacion, echo=FALSE, message=FALSE}
+tabla_cargo_grupo <- prop.table(
+  table(data$cargo_grupo, data$rotacion),
+  1
+) * 100
+
+categorias <- rownames(tabla_cargo_grupo)
+no_rot <- as.numeric(tabla_cargo_grupo[, "0"])
+si_rot <- as.numeric(tabla_cargo_grupo[, "1"])
+
+highchart() %>%
+  hc_chart(type = "column") %>%
+  hc_plotOptions(
+    column = list(
+      stacking = "percent",
+      dataLabels = list(
+        enabled = TRUE,
+        format = "{point.percentage:.1f}%"
+      )
+    )
+  ) %>%
+  hc_title(text = "Proporción de rotación según grupo de cargo") %>%
+  hc_xAxis(
+    categories = categorias,
+    title = list(text = "Grupo de cargo")
+  ) %>%
+  hc_yAxis(
+    labels = list(format = "{value:.0f}%"),
+    title = list(text = "Proporción")
+  ) %>%
+  hc_add_series(
+    name = "No rotación",
+    data = no_rot
+  ) %>%
+  hc_add_series(
+    name = "Sí rotación",
+    data = si_rot
+  ) %>%
+  hc_colors(c("#5BC0DE", "#D9534F")) %>%
+  hc_tooltip(
+    pointFormat = "<b>{series.name}:</b> {point.percentage:.1f}%"
+  )
+
+
+```
+
+
+  </div>
+</div>
+
+
+<div id="modelo" class="panel-seccion" data-title="Modelo">
+  <div class="contenido-seccion">
+  
+<p>
+
+En una organización, se busca comprender y prever los factores que influyen en la rotación de empleados entre distintos cargos. La empresa ha recopilado datos históricos sobre el empleo de sus trabajadores, incluyendo variables como la antigüedad en el cargo actual, el nivel de satisfacción laboral, el salario actual, edad y otros factores relevantes. La gerencia planea desarrollar un modelo de regresión logística que permita estimar la probabilidad de que un empleado cambie de cargo en el próximo período y determinar cuales factores indicen en mayor proporción a estos cambios.
+
+Con esta información, la empresa podrá tomar medidas proactivas para retener a su talento clave, identificar áreas de mejora en la gestión de recursos humanos y fomentar un ambiente laboral más estable y tranquilo. La predicción de la probabilidad de rotación de empleados ayudará a la empresa a tomar decisiones estratégicas informadas y a mantener un equipo de trabajo comprometido y satisfecho en sus roles actuales.
+
+A continuación se describen los pasos que la gerencia ha propuesto para el análisis:
+
+
+</p>
+
+  </div>
+</details>
+
+<div id="conclusiones" class="panel-seccion" data-title="Conclusiones">
+  <div class="contenido-seccion">
+
+<p>
+
+En una organización, se busca comprender y prever los factores que influyen en la rotación de empleados entre distintos cargos. La empresa ha recopilado datos históricos sobre el empleo de sus trabajadores, incluyendo variables como la antigüedad en el cargo actual, el nivel de satisfacción laboral, el salario actual, edad y otros factores relevantes. La gerencia planea desarrollar un modelo de regresión logística que permita estimar la probabilidad de que un empleado cambie de cargo en el próximo período y determinar cuales factores indicen en mayor proporción a estos cambios.
+
+Con esta información, la empresa podrá tomar medidas proactivas para retener a su talento clave, identificar áreas de mejora en la gestión de recursos humanos y fomentar un ambiente laboral más estable y tranquilo. La predicción de la probabilidad de rotación de empleados ayudará a la empresa a tomar decisiones estratégicas informadas y a mantener un equipo de trabajo comprometido y satisfecho en sus roles actuales.
+
+A continuación se describen los pasos que la gerencia ha propuesto para el análisis:
+
+
+</p>
+  
+  </div>
+</details>
+
+  
+
