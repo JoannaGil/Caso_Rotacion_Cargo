@@ -98,5 +98,13 @@ body {
 .contenido-seccion {
   padding: 20px;
 }
+
+body p, .main-container p {
+  text-align: justify !important;
+  line-height: 1.5;
+  margin-top: 15px !important;
+  margin-bottom: 15px !important;
+  font-size: 15px !important;
+}
 </style>
 ', sep = "")

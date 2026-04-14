@@ -15,6 +15,13 @@ library(paqueteMODELOS)  # Fuente del dataset
 library(janitor)         # Limpieza de nombres de columnas (clean_names)
 library(dplyr)           # Manipulación de datos (rename, pipes %>%)
 library(skimr)           # Resumen estadístico enriquecido (skim)
+library(highcharter)
+library(tidyr) 
+library(ggplot2)
+library(summarytools)
+library(janitor)
+library(skimr)
+library(pROC)
 
 # -----------------------------------------------------------------------------
 # 1. CARGA DE DATOS
@@ -177,7 +184,7 @@ data <- rotacion_limpio %>%
     
     # Factores ordinales
     satisfaccion_ambiental = factor(satisfaccion_ambiental, levels = 1:4),
-    satisfaccion_laboral   = factor(satisfaccion_laboral,   levels = 1:4),
+    #satisfaccion_laboral   = factor(satisfaccion_laboral,   levels = 1:4),
     rendimiento_laboral    = factor(rendimiento_laboral,    levels = 1:4)
   ) %>%
   # Agrupación de cargo para reducir ruido

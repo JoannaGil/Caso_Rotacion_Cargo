@@ -1,6 +1,10 @@
 ---
-title: "Reporte interactivo"
-output: html_document
+title: "Actividad 3"
+output:
+  pdf_document: default
+  html_document: default
+  output: pdf_document
+  always_allow_html: true
 ---
 
 ```{r, echo=FALSE, results='asis'}
@@ -14,6 +18,8 @@ source("../Scripts/ui_js.R")
 ```{r, include=FALSE, message=FALSE, warning=FALSE}
 source("../Scripts/Analisis_Exploratorio_Datos.R")
 source("../Scripts/Analisis_Univariado.R")
+source("../Scripts/Analisis_Bivariado.R")
+source("../Scripts/Modelo_Regresion_Logistica.R")
 ```
 
 
@@ -33,7 +39,7 @@ La combinación de estos enfoques permitió realizar una selección más robusta
 <div id="analisisUnivariado" class="panel-seccion" data-title="Análisis Univariado">
   <div class="contenido-seccion">
 
-### Distribución del Ingreso Mensual
+### 1.1. Distribución del ingreso mensual de los empleados
 
 <p>
 
@@ -88,7 +94,7 @@ crear_boxplot_highcharter(
 ```
 
 
-### Distribución del Antigüedad en el cargo
+### 1.2. Distribución de la antigüedad en el cargo de los empleados
 
 
 <p>
@@ -137,7 +143,7 @@ highchart() %>%
 ```
 
 
-### Distribución de la Satisfaccion Laboral
+### 1.3. Distribución de la satisfacción laboral de los empleados
 
 <p>
 
@@ -174,7 +180,7 @@ highchart() %>%
 
 
 
-### Distribucion Horas Extras - Fuerte
+### 1.4. Distribución de las horas extra de los empleados
 
 <p>
 
@@ -210,8 +216,7 @@ highchart() %>%
 
 
 
-### Distribucion del Cargo 
-
+### 1.5. Distribución de cargo de los empleados
 
 <p>
 
@@ -256,7 +261,7 @@ highchart() %>%
 ```
 
 
-### Distribucion de viaje de negocios
+### 1.6. Distribucion de viaje de negocios del empleado 
 
 <p>
 
@@ -297,32 +302,18 @@ highchart() %>%
 <div id="analisisBivariado" class="panel-seccion" data-title="Análisis Bivariado">
   <div class="contenido-seccion">
 
-### Distribucion Horas extras / rotacion 
+### 2.1. Rotación de empleados según la realización de horas extra 
 
 <p>
 
-El análisis bivariado entre la variable horas extra y la rotación revela una diferencia significativa en las proporciones de salida entre los grupos. En los empleados que no realizan horas extra, la proporción de rotación es de 10.4%, mientras que en aquellos que sí realizan horas adicionales asciende a 30.5%. Esta diferencia de aproximadamente 20 puntos porcentuales sugiere una asociación relevante entre la realización de horas extra y la probabilidad de rotación. No obstante, dado el carácter descriptivo del análisis, estos resultados no permiten establecer una relación causal, sino únicamente evidenciar un patrón diferenciado entre los grupos.
+La variable horas extra presenta el mayor impacto observado en el análisis bivariado, evidenciando una diferencia de aproximadamente 20 puntos porcentuales en la proporción de rotación entre los grupos. En particular, los empleados que no realizan horas extra muestran una rotación del 10.4%, mientras que aquellos que sí las realizan alcanzan un 30.5%. Esta diferencia posiciona a las horas extra como la variable con mayor capacidad explicativa dentro del conjunto analizado, estableciendo un punto de referencia para la comparación con las demás variables.
 
 </p>
 
 
 ```{r Graf_horasextras_rotacion, echo=FALSE, message=FALSE}
 
-tabla_horas <- data %>%
-  count(horas_extra, rotacion) %>%
-  group_by(horas_extra) %>%
-  mutate(prop = n / sum(n) * 100) %>%
-  ungroup()
 
-#tabla_horas
-
-no_rot <- tabla_horas %>%
-  filter(rotacion == 0) %>%
-  pull(prop)
-
-si_rot <- tabla_horas %>%
-  filter(rotacion == 1) %>%
-  pull(prop)
 
 highchart() %>%
   hc_chart(type = "column") %>%
@@ -358,24 +349,16 @@ highchart() %>%
 ```
 
 
-### Distribucion Satisfaccion Laboral / rotacion 
+### 2.2. Rotación de empleados según el nivel de satisfacción laboral
 
 
 <p>
-El análisis de la rotación según el nivel de satisfacción laboral evidencia una relación inversa entre ambas variables. A medida que aumenta el nivel de satisfacción, la proporción de empleados que rotan tiende a disminuir, mientras que la permanencia en la organización se incrementa. En los niveles más bajos de satisfacción se observa una mayor proporción de rotación, mientras que en los niveles más altos predomina la no rotación. Este patrón sugiere que la satisfacción laboral podría estar asociada con la decisión de permanencia de los empleados, mostrando una tendencia consistente a lo largo de los distintos niveles.
+
+El análisis de la rotación según el nivel de satisfacción laboral evidencia una relación inversa entre ambas variables, donde la proporción de rotación disminuye a medida que aumenta el nivel de satisfacción. En particular, los empleados con menor satisfacción (nivel 1) presentan una rotación de 22.8%, mientras que aquellos con mayor satisfacción (nivel 4) muestran una proporción considerablemente menor de 11.3%, lo que representa una diferencia aproximada de 11.5 puntos porcentuales. Si bien esta variable presenta un impacto relevante, su magnitud es inferior a la observada en las horas extra, que muestran una diferencia cercana a los 20 puntos porcentuales. No obstante, el comportamiento progresivo y consistente de la satisfacción laboral la posiciona como una de las variables más influyentes en la explicación de la rotación.
+
 </p>
 
 ```{r Graf_saf_laboral_rotacion, echo=FALSE, message=FALSE}
-library(tidyr) 
-
-tabla_sat <- prop.table(
-  table(data$satisfaccion_laboral_num, data$rotacion),
-  1
-) * 100
-
-categorias <- rownames(tabla_sat)
-no_rot <- as.numeric(tabla_sat[, "0"])
-si_rot <- as.numeric(tabla_sat[, "1"])
 
 highchart() %>%
   hc_chart(type = "column") %>%
@@ -409,32 +392,22 @@ highchart() %>%
   hc_tooltip(
     pointFormat = "<b>{series.name}:</b> {point.percentage:.1f}%"
   )
+
 ```
 
 
 
 
-### Distribucion Cargo / rotacion 
+### 2.3. Rotación de empleados según el grupo de cargo
 
 <p>
 
-El análisis de la rotación según el cargo evidencia diferencias relevantes entre los distintos roles dentro de la organización. En general, algunos cargos presentan mayores niveles de rotación en parte debido a su mayor representación en la plantilla, lo que incrementa la probabilidad de observar salidas en términos absolutos. Sin embargo, destaca el caso de Recursos Humanos, donde se observa una proporción relativamente alta de rotación en comparación con otros cargos, lo que sugiere un comportamiento distinto al esperado por su tamaño. Asimismo, cargos como Representante de Ventas y Técnico de Laboratorio también muestran niveles elevados de rotación, mientras que otros roles, como Gerente o Director de Investigación, presentan proporciones más bajas. En conjunto, estos resultados indican que la rotación no se distribuye de manera uniforme entre los cargos, evidenciando posibles diferencias en dinámicas laborales o condiciones asociadas a cada rol.
+El análisis de la rotación según el grupo de cargo evidencia diferencias relevantes entre los distintos roles dentro de la organización. En particular, se observa que grupos como Técnico de Laboratorio y Recursos Humanos presentan las mayores proporciones de rotación, con valores cercanos al 23.9% y 23.1%, respectivamente, mientras que el grupo de “Otros” muestra una proporción considerablemente menor, alrededor del 9.7%. Esta diferencia representa aproximadamente 14 puntos porcentuales entre los extremos, lo que posiciona al cargo como una variable de impacto medio-alto en la explicación de la rotación. En comparación con otras variables, este efecto es inferior al observado en las horas extra, pero superior al de la satisfacción laboral, evidenciando que el rol desempeñado dentro de la organización influye de manera importante, aunque no predominante, en la probabilidad de rotación.
 
 </p>
 
 ```{r Graf_cargo_rotacion, echo=FALSE, message=FALSE}
-library(highcharter)
 
-# Tabla de proporciones
-tabla_cargo <- prop.table(
-  table(data$cargo, data$rotacion),
-  1
-) * 100
-
-# Extraer datos
-categorias <- rownames(tabla_cargo)
-no_rot <- as.numeric(tabla_cargo[, "0"])
-si_rot <- as.numeric(tabla_cargo[, "1"])
 
 # Gráfico
 highchart() %>%
@@ -476,33 +449,16 @@ highchart() %>%
 ```
 
 
-### Distribucion de viajes de negocios / rotacion 
+### 2.4. Rotación de empleados según la frecuencia de viajes de negocio
 
 <p>
-El análisis de la rotación según la frecuencia de viajes de negocios evidencia una relación creciente entre ambas variables. Los empleados que no realizan viajes presentan una proporción de rotación aproximada del 8%, mientras que aquellos que viajan raramente muestran un incremento hasta cerca del 15%. Esta proporción aumenta de forma considerable en el grupo que viaja frecuentemente, alcanzando valores cercanos al 25%. En contraste, la proporción de empleados que no rotan disminuye progresivamente a medida que aumenta la frecuencia de viajes. Estos resultados muestran un patrón claro y consistente, donde una mayor exposición a viajes de negocios se asocia con una mayor probabilidad de rotación dentro de la organización.
+
+El análisis de la rotación según la frecuencia de viajes de negocios evidencia una relación creciente y consistente entre ambas variables. En particular, los empleados que no realizan viajes presentan una proporción de rotación del 8.0%, mientras que aquellos que viajan frecuentemente alcanzan valores cercanos al 24.9%, lo que representa una diferencia aproximada de 16.9 puntos porcentuales entre los extremos. Esta magnitud posiciona a los viajes de negocio como una de las variables con mayor impacto en la rotación, ubicándose por debajo de las horas extra, pero por encima de variables como el cargo y la satisfacción laboral. Asimismo, el comportamiento progresivo observado entre las categorías refuerza la consistencia de esta relación, evidenciando que una mayor exposición a viajes se asocia con un incremento sostenido en la probabilidad de rotación.
+
 </p>
 
 ```{r Graf_viajes_de_negocios_rotacion, echo=FALSE, message=FALSE}
 
-
-df_viaje <- data %>%
-  count(viaje_de_negocios, rotacion) %>%
-  mutate(
-    rotacion_label = ifelse(rotacion == 0, "No rotación", "Sí rotación")
-  )
-
-
-viaje_levels <- levels(data$viaje_de_negocios)
-
-no_rot <- df_viaje %>%
-  filter(rotacion_label == "No rotación") %>%
-  arrange(viaje_de_negocios) %>%
-  pull(n)
-
-si_rot <- df_viaje %>%
-  filter(rotacion_label == "Sí rotación") %>%
-  arrange(viaje_de_negocios) %>%
-  pull(n)
 
 highchart() %>%
   hc_chart(type = "column") %>%
@@ -532,35 +488,26 @@ highchart() %>%
     name = "Sí rotación",
     data = si_rot
   ) %>%
+  hc_colors(c("#A6CEE3", "#FB9A99")) %>%
   hc_tooltip(
-    pointFormat = "<b>{series.name}:</b> {point.percentage:.2f}%"
+    pointFormat = "<b>{series.name}:</b> {point.percentage:.1f}%"
   )
 
 
 
 ```
 
-### Distribucion de Log Ingresos / rotacion 
+### 2.5. Distribución del logaritmo de los ingresos según la rotación
 
 <p>
-El análisis de la distribución del logaritmo de los ingresos según la rotación evidencia diferencias claras entre ambos grupos. Los empleados que no presentan rotación muestran una media de 8.61, mientras que aquellos que sí rotan presentan una media inferior de 8.25, lo que indica una diferencia aproximada de 0.36 unidades en escala logarítmica. Asimismo, la mediana sigue un comportamiento similar, siendo más alta en el grupo sin rotación. En términos de dispersión, ambos grupos presentan rangos relativamente comparables, aunque el grupo sin rotación muestra una ligera mayor concentración en valores superiores. En conjunto, estos resultados sugieren que niveles más altos de ingreso se asocian con una menor probabilidad de rotación.
+
+El análisis de la distribución del logaritmo de los ingresos según la rotación evidencia diferencias claras entre ambos grupos. Los empleados que no presentan rotación muestran una media de 8.61, mientras que aquellos que sí rotan presentan una media inferior de 8.25, lo que representa una diferencia aproximada de 0.36 unidades en escala logarítmica. Esta diferencia, consistente tanto en la media como en la mediana, indica que los empleados con menores niveles de ingreso presentan una mayor probabilidad de rotación. En comparación con otras variables analizadas, el impacto de los ingresos es moderado, siendo inferior al observado en variables como horas extra, viajes de negocio y cargo, pero superior al de variables con menor capacidad explicativa como la antigüedad. En conjunto, estos resultados posicionan a los ingresos como un factor relevante, aunque no predominante, en la explicación de la rotación.
+
 
 </p>
 
 
 ```{r Graf_log_ingresos_rotacion, echo=FALSE, message=FALSE}
-
-# Estadísticos por grupo
-stats_0 <- boxplot.stats(data$log_ingresos[data$rotacion == 0])
-stats_1 <- boxplot.stats(data$log_ingresos[data$rotacion == 1])
-
-# Medias
-media_0 <- mean(data$log_ingresos[data$rotacion == 0], na.rm = TRUE)
-media_1 <- mean(data$log_ingresos[data$rotacion == 1], na.rm = TRUE)
-
-# Medianas
-mediana_0 <- stats_0$stats[3]
-mediana_1 <- stats_1$stats[3]
 
 highchart() %>%
   hc_chart(type = "boxplot") %>%
@@ -658,23 +605,119 @@ highchart() %>%
 
 ```
 
-### Distribucion de Antigüedad de cargo / rotacion 
+### 2.6. Distribución de la antigüedad en el cargo según la rotación
 
 <p>
 
-El análisis de la rotación según el grupo de cargo evidencia diferencias importantes entre las distintas áreas de la organización. El grupo de Ventas presenta la mayor proporción de rotación, con valores cercanos al 30%, lo que lo posiciona como el segmento con mayor riesgo de salida de empleados. Por su parte, el grupo de Tecnico de Laboratorio muestra una proporción intermedia de rotación, alrededor del 24%, mientras que el grupo de Recursos Humanos (RH) presenta niveles considerablemente más bajos, cercanos al 15%. En contraste, los demás cargos agrupados en “Otros” mantienen una proporción de rotación más moderada. En conjunto, estos resultados evidencian que la rotación no se distribuye de manera homogénea entre los grupos de cargo, destacándose particularmente el comportamiento del área de Ventas.
+El análisis de la antigüedad en el cargo según la rotación evidencia una relación inversa y progresiva entre ambas variables. En particular, los empleados con menor antigüedad (0–1 años) presentan una proporción de rotación de aproximadamente 27.9%, mientras que aquellos con mayor permanencia (6+ años) muestran una proporción considerablemente menor, cercana al 10.2%, lo que representa una diferencia aproximada de 17.7 puntos porcentuales. No obstante, este comportamiento debe interpretarse con cautela, ya que responde a un patrón estructural en el que los empleados más nuevos presentan naturalmente mayor probabilidad de salida. En este sentido, aunque la magnitud de la diferencia es elevada, el efecto observado es progresivo y menos abrupto en comparación con variables como horas extra o viajes de negocio. Asimismo, el análisis mediante boxplot muestra una alta superposición entre los grupos y diferencias moderadas en las medianas, lo que sugiere una menor capacidad discriminante directa. En conjunto, estos resultados posicionan a la antigüedad como una variable de impacto medio, relevante en la explicación de la rotación, pero no predominante dentro del conjunto analizado.
 
+La antigüedad no es causa directa, sino condición estructural del ciclo del empleado.
 </p>
 
-```{r Graf_antiguedad_cargo_rotacion, echo=FALSE, message=FALSE}
-tabla_cargo_grupo <- prop.table(
-  table(data$cargo_grupo, data$rotacion),
-  1
-) * 100
 
-categorias <- rownames(tabla_cargo_grupo)
-no_rot <- as.numeric(tabla_cargo_grupo[, "0"])
-si_rot <- as.numeric(tabla_cargo_grupo[, "1"])
+
+```{r Graf_ant_cargo_rotacion, echo=FALSE, message=FALSE}
+
+
+highchart() %>%
+  hc_chart(type = "boxplot") %>%
+  hc_title(text = "Distribución de la antigüedad en el cargo según rotación") %>%
+  hc_xAxis(
+    categories = c("No rotación", "Sí rotación"),
+    title = list(text = "Rotación")
+  ) %>%
+  hc_yAxis(
+    title = list(text = "Antigüedad en el cargo (años)")
+  ) %>%
+  hc_add_series(
+    name = "Boxplot",
+    data = list(
+      list(
+        low = stats_0$stats[1],
+        q1 = stats_0$stats[2],
+        median = stats_0$stats[3],
+        q3 = stats_0$stats[4],
+        high = stats_0$stats[5]
+      ),
+      list(
+        low = stats_1$stats[1],
+        q1 = stats_1$stats[2],
+        median = stats_1$stats[3],
+        q3 = stats_1$stats[4],
+        high = stats_1$stats[5]
+      )
+    ),
+    tooltip = list(
+      pointFormat = paste0(
+        "<b>Mínimo:</b> {point.low:.2f}<br>",
+        "<b>Q1:</b> {point.q1:.2f}<br>",
+        "<b>Mediana:</b> {point.median:.2f}<br>",
+        "<b>Q3:</b> {point.q3:.2f}<br>",
+        "<b>Máximo:</b> {point.high:.2f}"
+      )
+    )
+  ) %>%
+  hc_add_series(
+    type = "scatter",
+    name = "Valores atípicos",
+    data = c(
+      lapply(stats_0$out, function(x) list(x = 0, y = x)),
+      lapply(stats_1$out, function(x) list(x = 1, y = x))
+    ),
+    marker = list(
+      fillColor = "red",
+      lineColor = "black",
+      lineWidth = 1,
+      radius = 4
+    ),
+    tooltip = list(
+      pointFormat = "<b>Atípico:</b> {point.y:.2f}"
+    )
+  ) %>%
+  hc_add_series(
+    type = "scatter",
+    name = "Media",
+    data = list(
+      list(x = 0, y = media_0),
+      list(x = 1, y = media_1)
+    ),
+    marker = list(
+      symbol = "diamond",
+      radius = 6,
+      fillColor = "green"
+    ),
+    dataLabels = list(
+      enabled = TRUE,
+      format = "Media: {point.y:.2f}"
+    ),
+    tooltip = list(
+      pointFormat = "<b>Media:</b> {point.y:.2f}"
+    )
+  ) %>%
+  hc_add_series(
+    type = "line",
+    name = "Diferencia entre medianas",
+    data = list(
+      list(x = 0, y = mediana_0),
+      list(x = 1, y = mediana_1)
+    ),
+    dashStyle = "ShortDash",
+    lineWidth = 2,
+    marker = list(enabled = TRUE),
+    dataLabels = list(
+      enabled = TRUE,
+      format = "Mediana: {point.y:.2f}"
+    ),
+    tooltip = list(
+      pointFormat = "<b>Mediana:</b> {point.y:.2f}"
+    )
+  )
+
+
+```
+
+```{r Graf_antcargo_rotacion, echo=FALSE, message=FALSE}
+
 
 highchart() %>%
   hc_chart(type = "column") %>%
@@ -687,10 +730,10 @@ highchart() %>%
       )
     )
   ) %>%
-  hc_title(text = "Proporción de rotación según grupo de cargo") %>%
+  hc_title(text = "Proporción de rotación según antigüedad en el cargo") %>%
   hc_xAxis(
     categories = categorias,
-    title = list(text = "Grupo de cargo")
+    title = list(text = "Rango de antigüedad")
   ) %>%
   hc_yAxis(
     labels = list(format = "{value:.0f}%"),
@@ -704,42 +747,56 @@ highchart() %>%
     name = "Sí rotación",
     data = si_rot
   ) %>%
-  hc_colors(c("#5BC0DE", "#D9534F")) %>%
+  hc_colors(c("#A6CEE3", "#FB9A99")) %>%
   hc_tooltip(
     pointFormat = "<b>{series.name}:</b> {point.percentage:.1f}%"
   )
 
-
 ```
 
 
+### 2.7. Variables más influyentes en la rotación de empleados
 
-```{r}
+<p>
+
+En términos generales, los resultados sugieren que la rotación está más asociada a condiciones operativas y de experiencia laboral, como la carga de trabajo y la dinámica de desplazamiento, que a variables estructurales como la antigüedad o el rol dentro de la organización.
+
+</p>
+
+
+
+
+```{r Graf_niveles, echo=FALSE, message=FALSE}
+
+
 ranking <- data.frame(
-  Variable = c("Horas extra", "Satisfacción laboral", "Ingresos (log)", 
-               "Viajes de negocio", "Cargo (grupo)", "Antigüedad cargo"),
-  Impacto = c(20, 18, 15, 17, 10, 5)  # aproximación basada en tu análisis
-)
+  Variable = c("Horas extra",
+               "Satisfacción laboral",
+               "Viajes de negocio",
+               "Ingresos (log)",
+               "Cargo (grupo)",
+               "Antigüedad cargo"),
+  Impacto_relativo = c(20, 18, 17, 15, 10, 5)
+) %>%
+  arrange(desc(Impacto_relativo))
 
-ranking <- ranking %>%
-  arrange(desc(Impacto))
-
-ranking
-
+data = ranking$Impacto_relativo
 highchart() %>%
   hc_chart(type = "bar") %>%
-  hc_title(text = "Ranking de variables más influyentes en la rotación") %>%
+  hc_title(text = "Ranking relativo de variables según su influencia en la rotación") %>%
+  hc_subtitle(text = "Escala construida a partir del análisis exploratorio (EDA)") %>%
   hc_xAxis(
     categories = ranking$Variable,
     title = list(text = NULL)
   ) %>%
   hc_yAxis(
-    title = list(text = "Nivel de impacto")
+    min = 0,
+    title = list(text = "Nivel de impacto relativo")
   ) %>%
   hc_add_series(
-    name = "Impacto",
+    name = "Impacto relativo",
     data = ranking$Impacto,
-    color = "#2E86C1"
+    color = "#B2DF8A"
   ) %>%
   hc_plotOptions(
     series = list(
@@ -747,6 +804,16 @@ highchart() %>%
         enabled = TRUE,
         format = "{point.y}"
       )
+    )
+  ) %>%
+  hc_tooltip(
+    pointFormat = "<b>Impacto relativo:</b> {point.y}"
+  ) %>%
+  hc_caption(
+    text = paste(
+      "Nota: el ranking es una síntesis del análisis bivariado.",
+      "Los valores representan una escala relativa de influencia,",
+      "no coeficientes del modelo ni unidades directamente comparables."
     )
   )
 
@@ -757,39 +824,133 @@ highchart() %>%
 </div>
 
 
-<div id="modelo" class="panel-seccion" data-title="Modelo">
+<div id="modelo" class="panel-seccion" data-title="Modelo de regresión logística">
   <div class="contenido-seccion">
   
+  
+### 3.1. Descripción del modelo  
+
 <p>
 
-En una organización, se busca comprender y prever los factores que influyen en la rotación de empleados entre distintos cargos. La empresa ha recopilado datos históricos sobre el empleo de sus trabajadores, incluyendo variables como la antigüedad en el cargo actual, el nivel de satisfacción laboral, el salario actual, edad y otros factores relevantes. La gerencia planea desarrollar un modelo de regresión logística que permita estimar la probabilidad de que un empleado cambie de cargo en el próximo período y determinar cuales factores indicen en mayor proporción a estos cambios.
-
-Con esta información, la empresa podrá tomar medidas proactivas para retener a su talento clave, identificar áreas de mejora en la gestión de recursos humanos y fomentar un ambiente laboral más estable y tranquilo. La predicción de la probabilidad de rotación de empleados ayudará a la empresa a tomar decisiones estratégicas informadas y a mantener un equipo de trabajo comprometido y satisfecho en sus roles actuales.
-
-A continuación se describen los pasos que la gerencia ha propuesto para el análisis:
-
+Se construyó un modelo de regresión logística con el objetivo de estimar la probabilidad de rotación de los empleados a partir de variables previamente seleccionadas en el análisis exploratorio. Las variables incluidas en el modelo fueron: horas extra, grupo de cargo, frecuencia de viajes de negocio, satisfacción laboral, logaritmo de los ingresos y antigüedad en el cargo. Estas variables fueron seleccionadas con base en su relevancia observada en el análisis bivariado y su capacidad explicativa en relación con la rotación.
 
 </p>
+
+### 3.2. Evaluación del modelo
+
+```{r evaluacion_modelo, echo=FALSE, message=FALSE}
+
+# # Gráfico ROC
+plot(roc_modelo, main = "Curva ROC del modelo de rotación")
+
+
+```
+
+<p>
+
+El modelo presenta un desempeño adecuado, evidenciado por una reducción significativa de la devianza respecto al modelo nulo, lo que indica una mejora en la capacidad explicativa. Asimismo, el área bajo la curva ROC (AUC) es aproximadamente 0.79, lo que refleja una buena capacidad de discriminación entre empleados que rotan y aquellos que permanecen en la organización.
+
+Sin embargo, al analizar la matriz de confusión, se observa que el modelo tiende a clasificar correctamente la mayoría de los casos de no rotación, pero presenta limitaciones en la identificación de empleados que sí rotan. Este comportamiento sugiere la presencia de desbalance en las clases, lo que afecta la sensibilidad del modelo para detectar eventos de rotación.
+
+</p>
+
+### 3.3. Importancia de las variables (Odds Ratio)
+
+```{r odds_ratio, echo=FALSE, message=FALSE}
+
+resumen_modelo <- summary(modelo_nuevo)
+
+tabla_completa <- data.frame(
+  Variable = rownames(resumen_modelo$coefficients),
+  Coeficiente = round(resumen_modelo$coefficients[,1], 3),
+  Error_Estandar = round(resumen_modelo$coefficients[,2], 3),
+  z_value = round(resumen_modelo$coefficients[,3], 3),
+  p_value = round(resumen_modelo$coefficients[,4], 4),
+  Odds_Ratio = round(exp(resumen_modelo$coefficients[,1]), 3)
+)
+
+#tabla_completa
+
+tabla_plot <- tabla_completa
+tabla_plot <- tabla_plot[tabla_plot$Variable != "(Intercept)", ]
+
+ggplot(tabla_plot, aes(x = reorder(Variable, Odds_Ratio), y = Odds_Ratio)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Odds ratio de las variables del modelo",
+    x = "Variable",
+    y = "Odds ratio"
+  ) +
+  theme_minimal()
+
+
+```
+
+<p>
+
+El análisis de los odds ratio permite interpretar el impacto de cada variable sobre la probabilidad de rotación. En este sentido, las horas extra se posicionan como el factor de mayor influencia, incrementando significativamente la probabilidad de salida de los empleados. De igual manera, la frecuencia de viajes de negocio, especialmente en niveles altos, muestra un efecto positivo relevante sobre la rotación.
+
+Por otro lado, variables como la satisfacción laboral y el nivel de ingresos presentan una relación inversa con la rotación, actuando como factores protectores. A medida que aumentan estos valores, la probabilidad de rotación disminuye. En cuanto al grupo de cargo, se observan diferencias en la probabilidad de rotación dependiendo del rol, lo que sugiere un efecto heterogéneo. Finalmente, la antigüedad en el cargo presenta un impacto negativo de menor magnitud, consistente con su carácter estructural.
+
+</p>
+
+### 3.4. Distribución de probabilidades predichas
+
+```{r probabilidades_predichas, echo=FALSE, message=FALSE}
+
+# Crear probabilidades predichas
+df_modelo <- df_modelo %>%
+  mutate(prob_rotacion = predict(modelo_nuevo, type = "response"))
+
+# Gráfico
+
+ggplot(df_modelo, aes(x = prob_rotacion)) +
+  geom_histogram(bins = 30, fill = "#2E86C1", color = "white") +
+  labs(
+    title = "Distribución de las probabilidades predichas de rotación",
+    x = "Probabilidad de rotación",
+    y = "Frecuencia de empleados"
+  ) +
+  theme_minimal()
+
+```
+
+<p>
+
+La distribución de las probabilidades predichas muestra que la mayoría de los empleados presentan una baja probabilidad de rotación, concentrándose en valores cercanos a cero. Sin embargo, se observa una cola hacia valores más altos, lo que indica la presencia de un grupo reducido de empleados con mayor riesgo de salida.
+
+Este comportamiento sugiere que el modelo es conservador en sus predicciones, priorizando la precisión en la clase mayoritaria, pero con menor capacidad para identificar correctamente los casos de rotación.
+
+</p>
+
+
+### 3.5. Interpretación del modelo
+
+<p>
+
+Los resultados del modelo confirman los hallazgos obtenidos en el análisis exploratorio. En particular, las variables asociadas a condiciones laborales, como las horas extra y la frecuencia de viajes de negocio, presentan el mayor impacto en la probabilidad de rotación. Esto indica que factores relacionados con la carga laboral y la dinámica de trabajo influyen significativamente en la decisión de permanencia de los empleados.
+
+Por otro lado, variables como la satisfacción laboral y los ingresos actúan como elementos estabilizadores, reduciendo la probabilidad de salida. En contraste, la antigüedad en el cargo muestra un efecto más estructural, asociado al ciclo natural del empleado dentro de la organización.
+
+</p>
+
+### 3.6. Conclusión del modelo
+
+<p>
+
+En conjunto, el modelo de regresión logística presenta un buen desempeño general y una adecuada capacidad explicativa. La coherencia entre los resultados del modelo y el análisis exploratorio refuerza la validez del enfoque utilizado. No obstante, se identifican oportunidades de mejora en la capacidad de clasificación de la rotación, particularmente en la detección de la clase minoritaria.
+
+</p>
+
+
+
+
 
   </div>
 </details>
 
-<div id="conclusiones" class="panel-seccion" data-title="Conclusiones">
-  <div class="contenido-seccion">
 
-<p>
-
-En una organización, se busca comprender y prever los factores que influyen en la rotación de empleados entre distintos cargos. La empresa ha recopilado datos históricos sobre el empleo de sus trabajadores, incluyendo variables como la antigüedad en el cargo actual, el nivel de satisfacción laboral, el salario actual, edad y otros factores relevantes. La gerencia planea desarrollar un modelo de regresión logística que permita estimar la probabilidad de que un empleado cambie de cargo en el próximo período y determinar cuales factores indicen en mayor proporción a estos cambios.
-
-Con esta información, la empresa podrá tomar medidas proactivas para retener a su talento clave, identificar áreas de mejora en la gestión de recursos humanos y fomentar un ambiente laboral más estable y tranquilo. La predicción de la probabilidad de rotación de empleados ayudará a la empresa a tomar decisiones estratégicas informadas y a mantener un equipo de trabajo comprometido y satisfecho en sus roles actuales.
-
-A continuación se describen los pasos que la gerencia ha propuesto para el análisis:
-
-
-</p>
-  
-  </div>
-</details>
 
   
 

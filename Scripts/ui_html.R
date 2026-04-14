@@ -5,7 +5,7 @@
 cat('
 <div class="cabecera-documento">
   <!-- Titulo principal del documento -->
-  <h1>Titulo del documento</h1>
+  <h1>Rotación de cargo</h1>
 
   <!-- Enunciado o contexto general del problema -->
   <p>
