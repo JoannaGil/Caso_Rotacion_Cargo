@@ -1,10 +1,6 @@
 ---
 title: "Actividad 3"
-output:
-  pdf_document: default
-  html_document: default
-  output: pdf_document
-  always_allow_html: true
+output: html_document
 ---
 
 ```{r, echo=FALSE, results='asis'}
